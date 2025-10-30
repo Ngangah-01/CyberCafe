@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Add Student - Daryeel Cyber Cafe</title>
+</head>
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+      <h1>Add Student</h1>
+      <div class="user-info">Record new student details • {{ now|date:"M d, Y" }}</div> <!-- Optional: Pass 'now' from view for dynamic date -->
+    </div>
+  </header>
+
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li class="alert alert-success">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <main class="main-content">
+    <section class="form-card">
+      <h2>Add New Student</h2>
+      <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="form-submit-btn">Add Student</button>
+      </form>
+    </section>
+  </main>
+
+  <a href="{% url 'students_list' %}" class="back-link">← Back to Student List</a>
+</body>
+</html>

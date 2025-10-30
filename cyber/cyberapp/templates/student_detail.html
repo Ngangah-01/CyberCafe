@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{student.firstname}}</title>
+</head>
+<body>
+  <h1>{{ student.firstname }}</h1>
+  <p>ID: {{ student.idnumber }}</p>
+  <p>phone Number: {{ student.phonenumber }}</p>
+
+  <h2>{{Payments}}</h2>
+  <ul>
+    {% for payment in payments %}
+      <li>Amount: {{ payment.amount }} | Date: {{ payment.date }} | Balance:{{payment.balance}} </li>
+    {% empty %}
+      <li>No payments found for this student.</li>
+    {% endfor %}
+  <a href="{% url 'students_list' %}">Back to Student List</a>
+</body>
+</html>

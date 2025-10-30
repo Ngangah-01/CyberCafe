@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    {% load static %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-Token" content="{{ csrf_token }}">
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <title>Active Sessions - Daryeel Cyber Cafe</title>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+            <h1>Active Sessions</h1>
+            <div class="user-info">{{ now|date:"M d, Y" }} • Monitor ongoing sessions</div>
+        </div>
+    </header>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="alert alert-success">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <main class="main-content">
+        <section class="sessions-table">
+            <h2>Current Active Sessions</h2>
+            {% if sessions %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Start Time</th>
+                            <th>Elapsed Time</th>
+                            <th>Amount Due</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                        <tr class="session-row" data-session-id="{{ session.id }}"
+                            data-student-id="{{ session.student.idnumber }}"
+                            data-start="{{ session.start_time|date:'c' }}">
+                            <td>{{ session.student.firstname }} {{ session.student.lastname }}</td>
+                            <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
+                            <td class="elapsed">00:00:00</td>
+                            <td class="amount">0.00 KSH</td>
+                            <td>
+                                <button class="action-btn end-btn" onclick="endSession(this)">End Session</button>
+                                <button type="button" class="stk-btn" title="Available after ending session" onclick="sendSTK(this)">Send STK</button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-sessions">
+                <p>No active sessions. All clear!</p>
+            </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <a href="{% url 'home' %}" class="back-link">← Back to Dashboard</a>
+
+    <script src="{% static 'js/scripts.js' %}"></script>
+</body>
+
+</html>

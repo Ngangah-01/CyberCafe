@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>add payment</title>
+</head>
+
+<body>
+  <h1>Add Payment</h1>
+  <form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Add Payment</button>
+  </form>
+  <a href="{% url 'students_list' %}">Back to Student List</a>
+</body>
+
+</html>

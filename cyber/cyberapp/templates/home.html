@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Home - Daryeel Cyber Cafe</title>
+</head>
+
+<body>
+  <header class="header">
+    <div class="header-content">
+      <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+      <h1>Dashboard</h1>
+      <div class="user-info">{{ now|date:"M d, Y" }} • Welcome, Admin</div>
+    </div>
+  </header>
+
+
+  <main class="main-content">
+    <section class="dashboard-cards">
+      <div class="card add-student">
+        <div class="card-icon">👤</div>
+        <h3>Add Student</h3>
+        <p>Record new student details</p>
+        <a href="{% url 'add_student' %}" class="card-btn">Add Now</a>
+      </div>
+
+      <div class="card view-payments">
+        <div class="card-icon">💰</div>
+        <h3>View Payments</h3>
+        <p>Track billing history</p>
+        <a href="{% url 'payment_list' %}" class="card-btn">View All</a>
+      </div>
+      <div class="card active-sessions">
+        <div class="card-icon">⏱️</div>
+        <h3>View Session Billing</h3>
+        <p>Monitor ongoing timers</p>
+        <a href="{% url 'active_sessions' %}" class="card-btn">Manage</a>
+      </div>
+      <div class="card total-students">
+        <div class="card-icon">📊</div>
+        <h3>Total Enrolled Students</h3>
+        <p class="card-metric">{{ students|length }} Students</p>
+        <a href="{% url 'students_list' %}" class="card-btn">View List</a>
+      </div>
+    </section>
+
+
+    {% if messages %}
+    <ul class="messages">
+      {% for message in messages %}
+      <li class="alert alert-success">{{ message }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <section class="students-table">
+      <h2>Recent Students</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Student Name</th>
+              <th>Student ID</th>
+              <th>Phone/Email</th>
+              <th>Session Start</th>
+              <th>Active Session</th>
+              <th>Total Hours</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for student in students %}
+            <tr>
+              <td>{{ student.firstname }} {{ student.lastname }}</td>
+              <td>{{ student.idnumber }}</td>
+              <td>{{ student.phonenumber }}</td>
+              <td>
+                {% if student.active_start_time %}
+                {{ student.active_start_time|date:"M d, Y H:i" }}
+                {% else %}
+                N/A
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-badge
+                {% if student.has_active_session %}
+                active
+                {% else %}
+                inactive
+                {% endif %}">
+                  {% if student.has_active_session %}
+                  Active
+                  {% else %}
+                  Inactive
+                  {% endif %}
+                </span>
+              </td>
+              <td>{{ student.total_hours|floatformat:1 }}</td>
+              <td>
+                {% if student.has_active_session %}
+                <!-- End: POST form to end_session -->
+                <form method="post" action="{% url 'end_session' student.idnumber %}?next=home"
+                  style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="action-btn end-btn"
+                    onclick="return confirm('End session for {{ student.firstname }} {{ student.lastname }}?')">
+                    End Session</button>
+                </form>
+                {% else %}
+                <a href="{% url 'start_session' student.idnumber %}" class="action-btn">Start Session</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7">No students available. Add your first one!</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</body>
+
+</html>
