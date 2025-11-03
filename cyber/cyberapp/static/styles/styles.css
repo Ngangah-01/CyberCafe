@@ -348,48 +348,51 @@ body::before {
   display: none;
 }
 
-/* Additions to static/styles/styles.css */
+/* Login Page */
 
-/* Login Page Specific */
-.login-card {
-  background: white;
-  border-radius: 16px;
-  /* Slightly more rounded for welcoming feel */
-  padding: 40px 32px;
-  max-width: 400px;
-  /* Compact for login */
-  margin: 0 auto;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  /* Deeper shadow for prominence */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.3), rgba(40, 167, 69, 0.3)),
+              url("../images/bg.jpg") center/cover no-repeat;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+/* === Login Wrapper === */
+.login-wrapper {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 20px;
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 90%;
   text-align: center;
-  position: relative;
-  overflow: hidden;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
-.login-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, #007bff, #28a745);
-  /* Blue-green accent bar */
-}
-
-.login-card h2 {
-  margin-bottom: 8px;
-  color: #333;
+.login-wrapper h1 {
   font-size: 28px;
   font-weight: 700;
+  margin-bottom: 8px;
 }
 
-.login-subtitle {
-  margin-bottom: 32px;
-  color: #666;
-  font-size: 16px;
+.subtitle {
+  font-size: 15px;
+  color: #dfe6eb;
+  margin-bottom: 30px;
 }
 
+/* === Form Elements === */
 .form-group {
   margin-bottom: 20px;
   text-align: left;
@@ -397,82 +400,93 @@ body::before {
 
 .form-group label {
   display: block;
-  margin-bottom: 6px;
+  color: #f1f1f1;
   font-weight: 600;
-  color: #495057;
+  margin-bottom: 6px;
   font-size: 14px;
 }
 
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-group input::placeholder {
+  color: #d0d7da;
+}
+
+.form-group input:focus {
+  background: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.5);
+}
+
+/* === Button === */
 .login-btn {
-  background: linear-gradient(135deg, #007bff, #0056b3) !important;
+  background: linear-gradient(135deg, #007bff, #00bfff);
+  border: none;
+  color: #fff;
+  padding: 14px 28px;
   font-size: 18px;
-  /* Larger for emphasis */
-  padding: 14px 28px !important;
-  /* Taller button */
+  border-radius: 10px;
+  width: 100%;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .login-btn:hover {
-  transform: translateY(-3px) !important;
-  /* Extra lift */
-  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 123, 255, 0.4);
 }
 
-/* Password visibility toggle (optional enhancement) */
-.form-group .password-toggle {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #999;
-}
-
-/* Login Footer */
-.login-footer {
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e9ecef;
-}
-
+/* === Links and Footer === */
 .forgot-link {
-  color: #007bff;
-  text-decoration: none;
+  display: block;
+  margin-top: 18px;
+  color: #00e6a1;
   font-size: 14px;
-  transition: color 0.3s;
+  text-decoration: none;
+  transition: 0.3s;
 }
 
 .forgot-link:hover {
-  color: #0056b3;
+  color: #00ffa8;
   text-decoration: underline;
 }
 
-/* App Footer (global, subtle) */
-.app-footer {
-  text-align: center;
-  padding: 20px;
-  color: #999;
-  font-size: 14px;
-  background: #f8f9fa;
+.footer {
   margin-top: 40px;
+  color: #cfd8dc;
+  font-size: 14px;
+  text-align: center;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .login-card {
-    margin: 0 20px;
-    padding: 32px 24px;
-  }
+.error-msg {
+  color: #ffb3b3;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
 
-  .login-card h2 {
+/* === Responsive === */
+@media (max-width: 768px) {
+  .login-wrapper {
+    padding: 35px 28px;
+  }
+  .login-wrapper h1 {
     font-size: 24px;
   }
-
-  .login-subtitle {
+  .subtitle {
     font-size: 14px;
   }
 }
+
 
 /* Responsive */
 @media (max-width: 768px) {
