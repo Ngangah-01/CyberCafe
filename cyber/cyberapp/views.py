@@ -4,11 +4,14 @@ from .models import Student, Payment, UsageSession
 from .forms import StudentForm, PaymentForm
 from django.contrib import messages
 from django.http import JsonResponse
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 
 
 
 # Create your views here.
 
+@login_required
 def home(request):
     #optimize queries with prefetch_related to reduce DB hits/N+1 problem
     students = Student.objects.prefetch_related('usagesession_set').all()
@@ -37,11 +40,12 @@ def home(request):
     }
     return render(request, 'home.html', context)
 
-
+@login_required
 def students_list(request):
     students = Student.objects.all()
     return render(request, 'students_list.html', {'students': students})
 
+@login_required
 def student_detail(request, idnumber):
     student = Student.objects.get(idnumber=idnumber)
     payments = student.payments.all()
@@ -52,7 +56,7 @@ def student_payments(request, idnumber):
     payments = student.payments.all()
     return render(request, 'student_payments.html', {'student': student, 'payments': payments})
 
-
+@login_required
 def add_student(request):
     if request.method == 'POST':
         form = StudentForm(request.POST)
@@ -69,6 +73,7 @@ def add_student(request):
     return render(request, 'add_student.html', {'form': form})
 
 #delete student function
+@login_required
 def delete_student(request, idnumber):
     student = get_object_or_404(Student, idnumber=idnumber)
     student_name = f"{student.firstname} {student.lastname}"
@@ -98,6 +103,7 @@ def add_payment(request):
     return render(request, 'add_payment.html', {'form': form})
 
 # update student function
+@login_required
 def update_student(request, idnumber):
     student = get_object_or_404(Student, idnumber=idnumber)
     if request.method == 'POST':
@@ -111,6 +117,7 @@ def update_student(request, idnumber):
     return render(request, 'update_student.html', {'form': form})
 
 
+@login_required
 def start_session(request, idnumber):
     student = get_object_or_404(Student, idnumber=idnumber)
 
@@ -183,6 +190,27 @@ def active_sessions(request):
     }
     return render(request, 'active_sessions.html', context)
 
+@login_required
 def sendSTK(request):
     # provide the implementation for sending STK push here
     pass
+
+# login function view
+def login_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('home')
+        else:
+            return render(request, 'login.html', {'error': 'Invalid username or password.'})
+
+    return render(request, 'login.html')
+
+# logout function view
+def logout_view(request):
+    logout(request)
+    return redirect('login')

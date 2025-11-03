@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <title>Login - Daryeel Cyber Cafe</title>
+</head>
+
+<body>
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+            <h1>Admin Login</h1>
+            <div class="user-info">Access your dashboard • {{ now|date:"M d, Y" }}</div>
+            <!-- Optional: Pass 'now' from view -->
+        </div>
+    </header>
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}danger{% endif %}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <main class="main-content">
+        <section class="login-card">
+            <h2>Welcome Back</h2>
+            <p class="login-subtitle">Sign in to manage your cyber cafe</p>
+            <form method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    {{ form.username }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.password.id_for_label }}">Password</label>
+                    {{ form.password }}
+                </div>
+                <button type="submit" class="form-submit-btn login-btn">Sign In</button>
+            </form>
+            <div class="login-footer">
+                <a href="#" class="forgot-link">Forgot Password?</a>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>&copy; 2025 Daryeel Cyber Cafe. All rights reserved.</p>
+    </footer>
+</body>
+
+</html>

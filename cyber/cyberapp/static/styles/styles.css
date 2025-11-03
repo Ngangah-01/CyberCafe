@@ -313,7 +313,7 @@ tr:hover {
   cursor: not-allowed;
   opacity: 0.8;
   margin-left: 8px;
-  border-radius:6px ;
+  border-radius: 6px;
   height: 30px;
   width: 100px;
   position: relative;
@@ -348,7 +348,131 @@ body::before {
   display: none;
 }
 
+/* Additions to static/styles/styles.css */
 
+/* Login Page Specific */
+.login-card {
+  background: white;
+  border-radius: 16px;
+  /* Slightly more rounded for welcoming feel */
+  padding: 40px 32px;
+  max-width: 400px;
+  /* Compact for login */
+  margin: 0 auto;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  /* Deeper shadow for prominence */
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff, #28a745);
+  /* Blue-green accent bar */
+}
+
+.login-card h2 {
+  margin-bottom: 8px;
+  color: #333;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  margin-bottom: 32px;
+  color: #666;
+  font-size: 16px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.login-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3) !important;
+  font-size: 18px;
+  /* Larger for emphasis */
+  padding: 14px 28px !important;
+  /* Taller button */
+}
+
+.login-btn:hover {
+  transform: translateY(-3px) !important;
+  /* Extra lift */
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4) !important;
+}
+
+/* Password visibility toggle (optional enhancement) */
+.form-group .password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+}
+
+/* Login Footer */
+.login-footer {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.forgot-link {
+  color: #007bff;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.forgot-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* App Footer (global, subtle) */
+.app-footer {
+  text-align: center;
+  padding: 20px;
+  color: #999;
+  font-size: 14px;
+  background: #f8f9fa;
+  margin-top: 40px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-card {
+    margin: 0 20px;
+    padding: 32px 24px;
+  }
+
+  .login-card h2 {
+    font-size: 24px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+  }
+}
 
 /* Responsive */
 @media (max-width: 768px) {
