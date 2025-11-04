@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from dotenv import load_dotenv
 from datetime import timedelta
 
 
@@ -24,11 +25,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
+# Load environment variables from .env file
+load_dotenv(os.path.join(BASE_DIR, '.env'))
+
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-5^%p+jc-_vt(_*3txw^@(&ltg&8e(*ro3jsr^u%y*g4c50@tsk'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-5^%p+jc-_vt(_*3txw^@(&ltg&8e(*ro3jsr^u%y*g4c50@tsk')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = ['cybercafe-0k4y.onrender.com', 'localhost', '127.0.0.1']
 
@@ -86,9 +90,10 @@ WSGI_APPLICATION = 'cyber.wsgi.application'
 #     }
 # }
 DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL')
-    )
+    'default': dj_database_url.parse(os.getenv('DATABASE_URL')) if os.getenv('DATABASE_URL') else {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
 
 # Password validation
