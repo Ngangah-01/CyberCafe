@@ -14,19 +14,28 @@
   <div class="header-content">
     <div class="logo">🖥️ Daryeel Cyber Cafe</div>
     <h1>Dashboard</h1>
+
     <div class="user-info">
-      {{ now|date:"M d, Y" }} • Welcome, {{ user.username }}
-    
-    <!-- Logout Icon -->
-    <a href="{% url 'logout' %}" class="logout-icon" title="Logout">
-      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24">
-        <path fill="currentColor"
-          d="M5 21q-.825 0-1.412-.587T3 19V5q0-.825.588-1.412T5 3h6q.425 0 .713.288T12 4t-.288.713T11 5H5v14h6q.425 0 .713.288T12 20t-.288.713T11 21zm12.175-8H10q-.425 0-.712-.288T9 12t.288-.712T10 11h7.175L15.3 9.125q-.275-.275-.275-.675t.275-.7t.7-.313t.725.288L20.3 11.3q.3.3.3.7t-.3.7l-3.575 3.575q-.3.3-.712.288t-.713-.313q-.275-.3-.262-.712t.287-.688z" />
-      </svg>
-    </a>
+      <span>{{ now|date:"M d, Y" }} • Welcome, {{ user.username }}</span>
+
+      <!-- Profile Dropdown -->
+      <div class="profile-menu">
+        <div class="profile-icon" id="profileToggle">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24">
+            <path fill="currentColor"
+              d="M12 12q-1.65 0-2.825-1.175T8 8q0-1.65 1.175-2.825T12 4t2.825 1.175T16 8q0 1.65-1.175 2.825T12 12m0 2q2.075 0 3.538 1.463T17 19v1q0 .425-.288.713T16 21H8q-.425 0-.712-.287T7 20v-1q0-2.075 1.463-3.538T12 14" />
+          </svg>
+        </div>
+
+        <div class="dropdown" id="profileDropdown">
+          <a href="{% url 'profile' %}">👤 Profile</a>
+          <a href="{% url 'logout' %}">🚪 Logout</a>
+        </div>
+      </div>
     </div>
   </div>
 </header>
+
 
 <main class="main-content">
     <section class="dashboard-cards">
@@ -134,6 +143,7 @@
       </div>
     </section>
   </main>
+  <script defer src="{% static 'js/scripts.js' %}"></script>
 </body>
 
 </html>
