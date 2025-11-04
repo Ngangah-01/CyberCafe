@@ -29,9 +29,18 @@ class UsageSession(models.Model):
 
     def duration_in_hours(self):
         if not self.end_time:
-            return 0
-        duration = self.end_time - self.start_time
-        return duration.total_seconds() / 3600  # hours
+            # For active sessions, calculate duration up to now
+            end = timezone.now()
+        else:
+            end = self.end_time
+        duration = end - self.start_time
+        # Calculate hours, minutes, and seconds
+        total_seconds = int(duration.total_seconds())
+        hours = total_seconds // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
     def total_amount(self):
         return round(self.duration_in_hours() * 100, 2)

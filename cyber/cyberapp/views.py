@@ -25,14 +25,16 @@ def home(request):
         if active_session:
             student.active_start_time = active_session.start_time
             student.has_active_session = True
+            student.duration_in_hours = active_session.duration_in_hours()
         else:
             student.active_start_time = None
             student.has_active_session = False
+            # student.duration_in_hours = "00:00:00"
         
         # Total hours from completed sessions only (end_time not null)
-        completed_sessions = [s for s in sessions if s.end_time]
-        total_hours = sum(s.duration_in_hours() for s in completed_sessions)
-        student.total_hours = round(total_hours, 1)  # 1 decimal for display
+        # completed_sessions = [s for s in sessions if s.end_time]
+        # total_hours = sum(s.duration_in_hours() for s in completed_sessions)
+        # student.total_hours = round(total_hours, 1)  # 1 decimal for display
     
     context = {
         'students': students,

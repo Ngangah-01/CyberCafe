@@ -117,7 +117,7 @@
                   {% endif %}
                 </span>
               </td>
-              <td>{{ student.total_hours|floatformat:1 }}</td>
+              <td>{{ student.duration_in_hours }}</td>
               <td>
                 {% if student.has_active_session %}
                 <!-- End: POST form to end_session -->
