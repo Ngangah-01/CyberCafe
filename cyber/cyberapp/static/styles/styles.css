@@ -474,6 +474,53 @@ body::before {
   font-size: 14px;
 }
 
+.logout-icon {
+  color: #fff;
+  text-decoration: none;
+  margin-left: 20px;
+  transition: transform 0.3s ease, color 0.3s ease;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.logout-icon svg {
+  cursor: pointer;
+  width: 26px;
+  height: 26px;
+  fill: #f8f9fa;
+  transition: transform 0.3s ease, fill 0.3s ease;
+}
+
+/* Tooltip (custom hover text) */
+.logout-icon::after {
+  content: attr(title);
+  position: absolute;
+  bottom: -32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, bottom 0.25s ease;
+}
+
+/* Hover effects */
+.logout-icon:hover svg {
+  transform: scale(1.15);
+  fill: #ff6b6b; /* red accent on hover */
+}
+
+.logout-icon:hover::after {
+  opacity: 1;
+  bottom: -42px;
+}
+
 /* === Responsive === */
 @media (max-width: 768px) {
   .login-wrapper {
