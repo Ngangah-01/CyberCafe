@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django_daraja.mpesa.core import MpesaClient
-from django_daraja.mpesa.exceptions import MpesaAPIException
 import json
 from decimal import Decimal
 
@@ -349,7 +348,7 @@ def sendSTK(request):
 
     except UsageSession.DoesNotExist:
         return JsonResponse({'error': 'Session not found'}, status=404)
-    except MpesaAPIException as e:
+    except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
     except Exception as e:
         return JsonResponse({'error': 'Internal server error'}, status=500)
