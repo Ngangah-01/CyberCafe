@@ -16,3 +16,6 @@ staticfiles/
 .idea/
 *.log
 .DS_Store
+
+#environment variables
+.env
