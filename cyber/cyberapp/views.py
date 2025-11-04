@@ -29,7 +29,7 @@ def home(request):
         else:
             student.active_start_time = None
             student.has_active_session = False
-            # student.duration_in_hours = "00:00:00"
+            student.duration_in_hours = "N/a"
         
         # Total hours from completed sessions only (end_time not null)
         # completed_sessions = [s for s in sessions if s.end_time]
