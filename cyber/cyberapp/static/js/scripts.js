@@ -139,3 +139,122 @@ document.addEventListener('DOMContentLoaded', () => {
         dropdown.classList.remove('show');
     });
 });
+
+
+// Global variables for modal
+let currentSessionId = null;
+
+// Show STK Modal
+function sendSTK(btn) {
+    const row = btn.closest('tr');
+    currentSessionId = row.dataset.sessionId;
+    document.getElementById('sessionIdDisplay').textContent = currentSessionId;
+    document.getElementById('phoneNumber').value = '';  // Clear input
+    document.getElementById('stkModal').style.display = 'block';
+}
+
+// Close STK Modal
+function closeSTKModal() {
+    document.getElementById('stkModal').style.display = 'none';
+    currentSessionId = null;
+}
+
+// Handle form submit and API call
+document.addEventListener('DOMContentLoaded', function() {
+    const stkForm = document.getElementById('stkForm');
+    stkForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const phoneNumber = document.getElementById('phoneNumber').value.trim();
+        if (!phoneNumber) {
+            alert('Please enter a phone number.');
+            return;
+        }
+
+        // Disable send button
+        const sendBtn = stkForm.querySelector('.send-btn');
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Sending...';
+
+        // POST to Django view
+        fetch('/send-stk/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                'session_id': currentSessionId,
+                'phone_number': phoneNumber
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);  // Or use a toast notification
+                closeSTKModal();
+                // Optionally update UI: e.g., disable button or change text to "Sent"
+                const btn = document.querySelector(`[data-session-id="${currentSessionId}"] .stk-btn`);
+                btn.textContent = 'STK Sent';
+                btn.disabled = true;
+                btn.classList.add('sent');  // Add CSS class for styling
+            } else {
+                alert('Error: ' + (data.error || data.message));
+            }
+        })
+        .catch(error => {
+            alert('Network error: ' + error);
+        })
+        .finally(() => {
+            sendBtn.disabled = false;
+            sendBtn.textContent = 'Send STK';
+        });
+    });
+
+    // Close modal on X click or outside
+    const modal = document.getElementById('stkModal');
+    const closeSpan = document.querySelector('.close');
+    closeSpan.onclick = closeSTKModal;
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            closeSTKModal();
+        }
+    };
+
+    // Your existing timer for elapsed time (if any)
+    updateElapsedTimes();
+    setInterval(updateElapsedTimes, 1000);
+
+    // Placeholder for endSession (implement your logic, e.g., AJAX to end session)
+    window.endSession = function(btn) {
+        const row = btn.closest('tr');
+        const sessionId = row.dataset.sessionId;
+        if (confirm('End this session?')) {
+            // AJAX call to end session endpoint
+            fetch(`/end-session/${sessionId}/`, { method: 'POST', headers: { 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value } })
+            .then(() => {
+                row.style.opacity = '0.5';
+                row.querySelector('.stk-btn').disabled = false;  // Enable STK after ending
+            })
+            .catch(() => alert('Error ending session'));
+        }
+    };
+});
+
+// Function to update elapsed times (example; adjust to your needs)
+function updateElapsedTimes() {
+    document.querySelectorAll('.session-row').forEach(row => {
+        const startStr = row.dataset.start;
+        const start = new Date(startStr);
+        const now = new Date();
+        const diff = now - start;
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+        row.querySelector('.elapsed').textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        // Update amount (e.g., 50 KSH per hour)
+        const amount = (diff / 3600000) * 50;
+        row.querySelector('.amount').textContent = `${amount.toFixed(2)} KSH`;
+    });
+}

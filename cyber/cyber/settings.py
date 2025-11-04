@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'cyberapp',
     'rest_framework',
+    'django_daraja',
 ]
 
 MIDDLEWARE = [
@@ -151,3 +152,14 @@ LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = 'home'
 # after logout, redirect to login page
 LOGOUT_REDIRECT_URL = '/login/'
+
+# Django Daraja settings
+MPESA_ENVIRONMENT = 'sandbox'  # Change to 'production' in production
+MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', 'your_consumer_key')
+MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', 'your_consumer_secret')
+MPESA_SHORTCODE = os.getenv('MPESA_SHORTCODE', 'your_shortcode')
+MPESA_SHORTCODE_TYPE = 'payBill'  # or 'TillNumber' based on your setup
+MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'your_passkey')
+MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'https://yourdomain.com/callback/')
+MPESA_STK_TIMEOUT = timedelta(minutes=5)
+

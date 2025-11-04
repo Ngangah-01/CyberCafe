@@ -6,7 +6,12 @@ from django.contrib import messages
 from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+from django_daraja.mpesa.core import MpesaClient
+from django_daraja.mpesa.exceptions import MpesaAPIException
+import json
+from decimal import Decimal
 
 
 # Create your views here.
@@ -192,11 +197,6 @@ def active_sessions(request):
     }
     return render(request, 'active_sessions.html', context)
 
-@login_required
-def sendSTK(request):
-    # provide the implementation for sending STK push here
-    pass
-
 # login function view
 def login_view(request):
     if request.method == 'POST':
@@ -220,3 +220,136 @@ def logout_view(request):
 @login_required
 def profile_view(request):
     return render(request, 'profile.html')
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def mpesa_callback(request):
+    """
+    Endpoint to handle M-Pesa STK Push callbacks.
+    M-Pesa POSTs JSON here after user enters PIN (success/fail).
+    Returns {'ResultCode': 0, 'ResultDesc': 'Accepted'} to acknowledge.
+    """
+    try:
+        # Parse the incoming JSON body from M-Pesa
+        body = json.loads(request.body)
+        callback_data = body.get('Body', {}).get('stkCallback', {})
+
+        # Extract key fields
+        checkout_request_id = callback_data.get('CheckoutRequestID')
+        result_code = callback_data.get('ResultCode')
+
+        if result_code == 0:  # Payment successful
+            # Parse metadata for details
+            metadata = callback_data.get('CallbackMetadata', {}).get('Item', [])
+            amount = next((item['Value'] for item in metadata if item['Name'] == 'Amount'), None)
+            receipt_number = next((item['Value'] for item in metadata if item['Name'] == 'MpesaReceiptNumber'), None)
+            phone_number = next((item['Value'] for item in metadata if item['Name'] == 'PhoneNumber'), None)
+            transaction_time = next((item['Value'] for item in metadata if item['Name'] == 'TransactionCompletedTime'), None)
+
+            # TODO: Update your database here
+            # Example: Find session by checkout_request_id (store it during STK initiation)
+            # from .models import Session
+            # session = Session.objects.get(checkout_request_id=checkout_request_id)
+            # session.payment_status = 'paid'
+            # session.mpesa_receipt = receipt_number
+            # session.amount_paid = amount
+            # session.save()
+
+            # Log or notify (e.g., send email/SMS)
+            print(f"Payment success: {amount} KSH from {phone_number}, Receipt: {receipt_number}, Time: {transaction_time}")
+
+        else:  # Payment failed (e.g., cancelled by user)
+            result_desc = callback_data.get('ResultDesc', 'Unknown failure')
+            
+            # TODO: Update DB to 'failed'
+            # session = Session.objects.get(checkout_request_id=checkout_request_id)
+            # session.payment_status = 'failed'
+            # session.save()
+
+            print(f"Payment failed for {checkout_request_id}: {result_desc}")
+
+        # Always acknowledge to M-Pesa (they require this format)
+        return JsonResponse({
+            'ResultCode': 0,
+            'ResultDesc': 'Accepted'
+        })
+
+    except json.JSONDecodeError:
+        # Invalid JSON from M-Pesa (rare)
+        return JsonResponse({
+            'ResultCode': 1,
+            'ResultDesc': 'Invalid JSON'
+        }, status=400)
+
+    except Exception as e:
+        # Catch-all for errors
+        print(f"Callback error: {e}")
+        return JsonResponse({
+            'ResultCode': 1,
+            'ResultDesc': 'Processing failed'
+        }, status=500)
+
+@login_required
+@require_http_methods(["POST"])
+def sendSTK(request):
+    session_id = request.POST.get('session_id')
+    phone_input = request.POST.get('phone_number')
+    if not session_id:
+        return JsonResponse({'error': 'Session ID required'}, status=400)
+
+    try:
+        session = UsageSession.objects.get(id=session_id)
+        student = session.student  # Assuming Session has a student foreign key
+        phone = phone_input if phone_input else student.phonenumber# Assume field exists (e.g., '0712345678')
+        
+        if not phone:
+            return JsonResponse({'error': 'Phone number required'}, status=400)
+
+        # Format phone to international: 25471xxxxxxxx
+        if phone.startswith('0'):
+            phone = '254' + phone[1:]
+        elif phone.startswith('7'):
+            phone = '2547' + phone[1:]
+        # Validate: 12 digits starting with 2547
+        if len(phone) != 12 or not phone.startswith('2547'):
+            return JsonResponse({'error': 'Invalid phone format'}, status=400)
+
+        # Placeholder amount; replace with your logic (e.g., based on session duration)
+        amount = Decimal('1000.00')
+        
+        account_reference = f'Session-{session.id}-{student.idnumber}'  # Assuming idnumber field
+        transaction_desc = f'Payment for session {session.id} on {session.start_time.date()}'
+        callback_url = request.build_absolute_uri('/mpesa/callback/')  # Full public HTTPS URL
+
+        cl = MpesaClient()
+        response = cl.stk_push(
+            phone_number=phone,
+            amount=str(amount),  # Must be string for API
+            account_reference=account_reference,
+            transaction_desc=transaction_desc,
+            callback_url=callback_url
+        )
+
+        if response.get('ResponseCode') == '0':
+            # Update session (add fields like payment_status, checkout_request_id to your model)
+            session.payment_status = 'pending'
+            session.checkout_request_id = response.get('CheckoutRequestID')
+            session.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'STK push sent! Check phone for prompt.',
+                'checkout_request_id': response.get('CheckoutRequestID')
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'message': response.get('errorMessage', 'STK push failed')
+            }, status=400)
+
+    except UsageSession.DoesNotExist:
+        return JsonResponse({'error': 'Session not found'}, status=404)
+    except MpesaAPIException as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    except Exception as e:
+        return JsonResponse({'error': 'Internal server error'}, status=500)
