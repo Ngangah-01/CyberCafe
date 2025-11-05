@@ -146,6 +146,14 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+CORS_ALLOW_CREDENTIALS = True
+CSRF_COOKIE_SECURE = True
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://cybercafe-0k4y.onrender.com",
+]
+
+
 # if not logged in, redirect to login page
 LOGIN_URL = '/login/'
 # after login, redirect to home page

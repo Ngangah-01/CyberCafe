@@ -19,16 +19,7 @@
             <p class="error-msg">{{ error }}</p>
             {% endif %}
 
-            <!-- {% if messages %}
-            <ul class="messages">
-                {% for message in messages %}
-                <li class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}danger{% endif %}">{{ message }}
-                </li>
-                {% endfor %}
-            </ul>
-            {% endif %} -->
-
-            <form method="POST" class="login-form">
+            <form method="POST"  action="{% url 'login' %}" class="login-form">
                 {% csrf_token %}
                 <div class="form-group">
                     <label for="username">Username</label>
