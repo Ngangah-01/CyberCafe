@@ -45,52 +45,67 @@ document.addEventListener('DOMContentLoaded', function () {
         const sessionId = row.dataset.sessionId;
         const studentId = row.dataset.studentId;
 
-        const csrfToken = document.querySelector('meta[name="csrf-Token"]').getAttribute('content');
-
-        fetch(`/end_session/${studentId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken // Assumes CSRF in head or meta
-            },
-            body: JSON.stringify({ session_id: sessionId })
-        })
-            .then(response => {
-                console.log('Response Status:', response.status);  // Debug: HTTP status
-                return response.json();  // Always parse JSON first
-            })
-            .then(data => {
-                console.log('Response Data:', data);  // Debug: Full response
-                if (data.status === 'success') {
-                    // On success: Update row to "ended" state, enable STK
-                    row.classList.remove('session-row');
-                    row.classList.add('ended-row');
-                    button.textContent = 'Session Ended';
-                    button.disabled = true;
-                    button.style.background = 'linear-gradient(135deg, #6c757d, #545b62)';
-                    const stkBtn = row.querySelector('.stk-btn');
-                    stkBtn.disabled = false;
-                    stkBtn.classList.remove('stk-btn');
-                    stkBtn.classList.add('action-btn');
-                    stkBtn.textContent = 'Send STK';
-                    stkBtn.onclick = function () {
-                        alert('STK Push Logic Here - Integrate M-Pesa/Daraja API'); // Placeholder
-                    };
-                    row.querySelector('.elapsed').textContent = 'Ended';
-                    row.querySelector('.amount').textContent = data.amount + ' KSH'; // Server final amount
-                    // Enhanced toast notification
-                    showMessage('Session ended successfully. Amount due: ' + data.amount + ' KSH.', 'success');
-                } else {
-                    showMessage(data.message || 'Error ending session: ' + data.status, 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Full Error:', error);  // Debug: Full error object
-                showMessage('Network error: ' + (error.message || 'Check console for details'), 'error');
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');  // Fixed: lowercase 'csrf-token'
+    const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
+    
+    if (!csrfToken) {
+        showMessage('CSRF token missing. Refresh the page.', 'error');
+        console.error('No CSRF token found');
+        return;
+    }
+    
+    console.log('CSRF Token:', csrfToken);  // Debug: Should log a token like 'abc123...'
+    console.log('Fetching:', `/end_session/${studentId}/`);  // Debug: URL
+    
+    fetch(`/end_session/${studentId}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrfToken  // Now correct
+        },
+        body: JSON.stringify({ session_id: sessionId })
+    })
+    .then(response => {
+        console.log('Response Status:', response.status);  // Debug: e.g., 200 OK
+        if (!response.ok) {
+            return response.text().then(text => {  // For non-OK, read as text (HTML) for debug
+                console.error('Error Response Body:', text.substring(0, 200) + '...');  // Log first 200 chars
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
             });
-    };
-
+        }
+        return response.json();  // Parse JSON only on OK
+    })
+    .then(data => {
+        console.log('Response Data:', data);  // Debug: {status: 'success', amount: '1.67'}
+        if (data.status === 'success') {
+            // On success: Update row to "ended" state, enable STK
+            row.classList.remove('session-row');
+            row.classList.add('ended-row');
+            button.textContent = 'Session Ended';
+            button.disabled = true;
+            button.style.background = 'linear-gradient(135deg, #6c757d, #545b62)';
+            const stkBtn = row.querySelector('.stk-btn');
+            stkBtn.disabled = false;
+            stkBtn.classList.remove('stk-btn');
+            stkBtn.classList.add('action-btn');
+            stkBtn.textContent = 'Send STK';
+            stkBtn.onclick = function () {  // Your sendSTK placeholder
+                alert('STK Push Logic Here - Integrate M-Pesa/Daraja API');
+            };
+            row.querySelector('.elapsed').textContent = 'Ended';
+            row.querySelector('.amount').textContent = data.amount + ' KSH';  // Server final amount
+            // Enhanced toast notification (your desired flow: notify + enable STK)
+            showMessage(`Session ended for ${row.cells[0].textContent}. Amount due: ${data.amount} KSH.`, 'success');
+        } else {
+            showMessage(data.message || 'Error ending session: ' + data.status, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Full Error:', error);  // Debug: Full error object
+        showMessage('Network error: ' + (error.message || 'Check console for details'), 'error');
+    });
+};
     // Enhanced toast notification function
     function showMessage(text, type) {
         // Remove existing toasts

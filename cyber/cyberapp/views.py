@@ -33,7 +33,7 @@ def home(request):
         else:
             student.active_start_time = None
             student.has_active_session = False
-            student.duration_in_hours = "N/a"
+            student.duration_in_hours = "N/A"
         
         # Total hours from completed sessions only (end_time not null)
         # completed_sessions = [s for s in sessions if s.end_time]
@@ -161,29 +161,29 @@ def end_session(request, idnumber):
     
     if session:
         if request.method == 'POST':
-            # Handle AJAX or regular POST
             session.end_time = timezone.now()
             session.is_active = False
             session.save()
             amount_due = session.total_amount()
             
-            messages.success(request, f"Session ended for {student.firstname} {student.lastname}. Amount due: {amount_due} KSH.")
-
+            # Add message only for non-AJAX (AJAX uses toast)
+            if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                messages.success(request, f"Session ended for {student.firstname} {student.lastname}. Amount due: {amount_due} KSH.")
+            
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX
-                return JsonResponse({'status': 'success', 'amount': amount_due})
+                return JsonResponse({'status': 'success', 'amount': str(amount_due)})  # str() fixes serialization
             else:
-                next_page = request.GET.get('next', 'active_sessions')  # Fallback to active_sessions
+                next_page = request.GET.get('next', 'active_sessions')
                 return redirect(next_page)
         else:
-            # For regular GET, perhaps render confirmation – but skip for now
-            pass
+            # GET: Redirect to avoid direct access
+            return redirect('active_sessions')
     else:
+        error_msg = "No active session found."
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'status': 'error', 'message': 'No active session'})
-        messages.error(request, "No active session found.")
+            return JsonResponse({'status': 'error', 'message': error_msg})
+        messages.error(request, error_msg)
         return redirect('active_sessions')
-    
-    return redirect('active_sessions')
 
 def active_sessions(request):
     sessions = UsageSession.objects.filter(
