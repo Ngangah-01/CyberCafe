@@ -159,8 +159,8 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     // Enhanced toast notification function
     function showMessage(text, type) {
-        if (window.showAlert) {
-            window.showAlert(text, type === 'success' ? 'success' : type === 'error' ? 'error' : 'info');
+        if (window.showToast) {
+            window.showToast(text, type === 'success' ? 'success' : type === 'error' ? 'error' : 'info');
             return;
         }
         alert(text);
