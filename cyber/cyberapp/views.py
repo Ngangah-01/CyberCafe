@@ -1,11 +1,13 @@
 import json
 import logging
+from datetime import timedelta
 from decimal import Decimal, ROUND_HALF_UP
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -29,6 +31,9 @@ from .models import Student, Payment, UsageSession
 logger = logging.getLogger(__name__)
 
 
+TOTAL_MACHINES = 30
+
+
 def _prepare_phone_number(raw_phone: str) -> str:
     """
     Normalize phone numbers captured as integers/strings into a format that
@@ -48,17 +53,81 @@ def _prepare_phone_number(raw_phone: str) -> str:
 
     return phone
 
+
+def _format_duration(seconds: int) -> str:
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
 @login_required
 def home(request):
-    #optimize queries with prefetch_related to reduce DB hits/N+1 problem
-    students = Student.objects.prefetch_related('usagesession_set').all()
-    
+    """
+    Feed every dashboard widget with realtime, financial, and roster data.
+    """
+    now = timezone.now()
+
+    students = list(
+        Student.objects.prefetch_related("usagesession_set")
+        .order_by("firstname", "lastname")
+    )
+
+    active_sessions = list(
+        UsageSession.objects.filter(is_active=True, end_time__isnull=True)
+        .select_related("student")
+        .order_by("start_time")
+    )
+    active_sessions_count = len(active_sessions)
+
+    utilization_rate = 0
+    if TOTAL_MACHINES:
+        utilization_rate = min(
+            100,
+            round((active_sessions_count / TOTAL_MACHINES) * 100),
+        )
+
+    total_students = Student.objects.count()
+    sessions_started_today = UsageSession.objects.filter(
+        start_time__date=now.date()
+    ).count()
+
+    recent_completed_sessions = list(
+        UsageSession.objects.filter(end_time__isnull=False)
+        .order_by("-end_time")[:10]
+    )
+    avg_session_length = "00:00:00"
+    if recent_completed_sessions:
+        total_seconds = sum(
+            (session.end_time - session.start_time).total_seconds()
+            for session in recent_completed_sessions
+        )
+        avg_session_length = _format_duration(
+            int(total_seconds / len(recent_completed_sessions))
+        )
+
+    revenue_today = (
+        Payment.objects.filter(date=now.date())
+        .aggregate(total=Sum("amount"))
+        .get("total")
+    ) or Decimal("0.00")
+
+    outstanding_balance = (
+        Payment.objects.filter(balance__gt=0)
+        .aggregate(total=Sum("balance"))
+        .get("total")
+    ) or Decimal("0.00")
+
+    recent_payments = list(
+        Payment.objects.select_related("student")
+        .order_by("-date", "-id")[:6]
+    )
+
     for student in students:
         sessions = student.usagesession_set.all()
-        
-        # Check for active session (is_active=True and no end_time)
-        active_session = next((s for s in sessions if s.is_active and not s.end_time), None)
-        
+        active_session = next(
+            (s for s in sessions if s.is_active and not s.end_time), None
+        )
         if active_session:
             student.active_start_time = active_session.start_time
             student.has_active_session = True
@@ -66,18 +135,22 @@ def home(request):
         else:
             student.active_start_time = None
             student.has_active_session = False
-            student.duration_in_hours = "N/A"
-        
-        # Total hours from completed sessions only (end_time not null)
-        # completed_sessions = [s for s in sessions if s.end_time]
-        # total_hours = sum(s.duration_in_hours() for s in completed_sessions)
-        # student.total_hours = round(total_hours, 1)  # 1 decimal for display
-    
+            student.duration_in_hours = "—"
+
     context = {
-        'students': students,
-        'now': timezone.now(),  # For header date if needed
+        "students": students,
+        "now": now,
+        "active_sessions": active_sessions,
+        "active_sessions_count": active_sessions_count,
+        "utilization_rate": utilization_rate,
+        "total_students": total_students,
+        "sessions_started_today": sessions_started_today,
+        "avg_session_length": avg_session_length,
+        "revenue_today": revenue_today,
+        "outstanding_balance": outstanding_balance,
+        "recent_payments": recent_payments,
     }
-    return render(request, 'home.html', context)
+    return render(request, "home.html", context)
 
 @login_required
 def students_list(request):
