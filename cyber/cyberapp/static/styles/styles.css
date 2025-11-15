@@ -159,8 +159,8 @@ img {
   justify-content: center;
   padding: 6px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--card-border);
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .profile-icon:hover {
@@ -173,7 +173,7 @@ img {
   position: absolute;
   right: 0;
   top: 44px;
-  background: rgba(9, 12, 22, 0.95);
+  background: #ffffff;
   border-radius: 16px;
   padding: 10px 0;
   min-width: 170px;
@@ -309,9 +309,9 @@ img {
 }
 
 .btn-secondary {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e2e8f0;
+  border-color: rgba(37, 99, 235, 0.2);
+  background: rgba(37, 99, 235, 0.08);
+  color: #1d4ed8;
 }
 
 .btn-ghost {
@@ -338,7 +338,7 @@ img {
 .form-card {
   border-radius: 28px;
   border: 1px solid var(--card-border);
-  background: rgba(8, 12, 26, 0.85);
+  background: var(--surface);
   box-shadow: var(--shadow);
   padding: 28px;
   display: flex;
@@ -377,8 +377,8 @@ img {
   width: 100%;
   padding: 12px 14px;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  background: #fff;
   color: var(--text);
   font-size: 15px;
 }
@@ -430,7 +430,7 @@ img {
   padding: 18px;
   border-radius: 22px;
   border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.02);
+  background: #ffffff;
 }
 
 .stat-card h4 {
@@ -451,7 +451,7 @@ img {
 .profile-card {
   border-radius: 24px;
   border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.02);
+  background: #ffffff;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -478,7 +478,7 @@ img {
 .detail-card {
   border-radius: 28px;
   border: 1px solid var(--card-border);
-  background: rgba(7, 11, 24, 0.9);
+  background: #ffffff;
   padding: 28px;
   box-shadow: var(--shadow);
   display: flex;
@@ -493,7 +493,7 @@ img {
 }
 
 .meta-item {
-  background: rgba(255, 255, 255, 0.02);
+  background: #f9fafb;
   border-radius: 18px;
   padding: 16px;
   border: 1px solid var(--card-border);
@@ -520,8 +520,8 @@ img {
   justify-content: space-between;
   padding: 14px 18px;
   border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--card-border);
+  background: #ffffff;
   font-size: 14px;
 }
 
@@ -531,8 +531,8 @@ img {
   gap: 6px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--card-border);
+  background: rgba(37, 99, 235, 0.1);
+  border: 1px solid rgba(37, 99, 235, 0.2);
   font-size: 12px;
   color: var(--muted);
 }
@@ -594,7 +594,7 @@ img {
   padding: 18px;
   border-radius: 18px;
   border: 1px solid var(--card-border);
-  background: rgba(255, 255, 255, 0.01);
+  background: #ffffff;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -680,13 +680,13 @@ img {
 .status-chip {
   padding: 18px;
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.04);
+  background: #ffffff;
   border: 1px solid var(--card-border);
   display: flex;
   flex-direction: column;
   gap: 4px;
   min-height: 110px;
-  box-shadow: inset 0 0 30px rgba(96, 165, 250, 0.08);
+  box-shadow: inset 0 0 30px rgba(15, 23, 42, 0.04);
 }
 
 .chip-label {
