@@ -159,26 +159,11 @@ document.addEventListener('DOMContentLoaded', function () {
     };
     // Enhanced toast notification function
     function showMessage(text, type) {
-        // Remove existing toasts
-        document.querySelectorAll('.toast-message').forEach(el => el.remove());
-
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `alert alert-${type === 'success' ? 'success' : 'danger'} toast-message`;
-        messageDiv.textContent = text;
-        messageDiv.style.cssText = `
-            position: fixed; top: 120px; right: 20px; z-index: 1000; 
-            padding: 15px 20px; border-radius: 6px; color: #155724; 
-            max-width: 350px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            background: #d4edda; border: 1px solid #c3e6cb;
-        `;
-        if (type === 'error') {
-            messageDiv.style.background = '#f8d7da';
-            messageDiv.style.color = '#721c24';
-            messageDiv.style.borderColor = '#f5c6cb';
+        if (window.showToast) {
+            window.showToast(text, type === 'success' ? 'success' : type === 'error' ? 'error' : 'info');
+            return;
         }
-        document.body.appendChild(messageDiv);
-        // Auto-remove after 5s
-        setTimeout(() => messageDiv.remove(), 5000);
+        alert(text);
     }
 });
 
@@ -195,15 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const toggle = document.getElementById('profileToggle');
     const dropdown = document.getElementById('profileDropdown');
 
-    toggle.addEventListener('click', (e) => {
-        e.stopPropagation();
-        dropdown.classList.toggle('show');
-    });
+    if (toggle && dropdown) {
+        toggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+        });
 
-    // Hide dropdown when clicking outside
-    document.addEventListener('click', () => {
-        dropdown.classList.remove('show');
-    });
+        // Hide dropdown when clicking outside
+        document.addEventListener('click', () => {
+            dropdown.classList.remove('show');
+        });
+    }
 });
 
 
