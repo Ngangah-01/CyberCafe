@@ -11,61 +11,185 @@
 
 <body>
   <header class="header">
-  <div class="header-content">
-    <div class="logo">🖥️ Daryeel Cyber Cafe</div>
-    <h1>Dashboard</h1>
-
-    <div class="user-info">
-      <span>{{ now|date:"M d, Y" }} • Welcome, {{ user.username }}</span>
-
-      <!-- Profile Dropdown -->
-      <div class="profile-menu">
-        <div class="profile-icon" id="profileToggle">
-          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24">
-            <path fill="currentColor"
-              d="M12 12q-1.65 0-2.825-1.175T8 8q0-1.65 1.175-2.825T12 4t2.825 1.175T16 8q0 1.65-1.175 2.825T12 12m0 2q2.075 0 3.538 1.463T17 19v1q0 .425-.288.713T16 21H8q-.425 0-.712-.287T7 20v-1q0-2.075 1.463-3.538T12 14" />
-          </svg>
-        </div>
-
-        <div class="dropdown" id="profileDropdown">
-          <a href="{% url 'profile' %}">👤 Profile</a>
-          <a href="{% url 'logout' %}">🚪 Logout</a>
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Operations Command Center</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{{ now|date:"l, M d" }}</span>
+        <div class="user-info">
+          <span>Welcome back, {{ user.username }}</span>
+          <div class="profile-menu">
+            <div class="profile-icon" id="profileToggle" aria-label="Profile menu" role="button" tabindex="0">
+              <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M12 12q-1.65 0-2.825-1.175T8 8q0-1.65 1.175-2.825T12 4t2.825 1.175T16 8q0 1.65-1.175 2.825T12 12m0 2q2.075 0 3.538 1.463T17 19v1q0 .425-.288.713T16 21H8q-.425 0-.712-.287T7 20v-1q0-2.075 1.463-3.538T12 14" />
+              </svg>
+            </div>
+            <div class="dropdown" id="profileDropdown">
+              <a href="{% url 'profile' %}">👤 Profile</a>
+              <a href="{% url 'logout' %}">🚪 Logout</a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-</header>
+  </header>
 
-
-<main class="main-content">
-    <section class="dashboard-cards">
-      <div class="card add-student">
-        <div class="card-icon">👤</div>
-        <h3>Add Student</h3>
-        <p>Record new student details</p>
-        <a href="{% url 'add_student' %}" class="card-btn">Add Now</a>
+  <main class="main-content">
+    <section class="hero">
+      <div class="hero-left">
+        <p class="eyebrow">Realtime Pulse</p>
+        <h1>Stay on top of sessions, students, and payments</h1>
+        <p class="hero-subtitle">Track operations across the floor, close out timers faster, and keep revenue flowing with a single glance.</p>
+        <div class="hero-stats">
+          <div class="hero-kpi">
+            <span class="label">Active sessions</span>
+            <strong>{{ active_sessions_count }}</strong>
+            <span class="kpi-foot">{{ utilization_rate }}% capacity</span>
+          </div>
+          <div class="hero-kpi">
+            <span class="label">Students onboarded</span>
+            <strong>{{ total_students }}</strong>
+            <span class="kpi-foot">{{ sessions_started_today }} new sessions today</span>
+          </div>
+          <div class="hero-kpi">
+            <span class="label">Avg. session length</span>
+            <strong>{{ avg_session_length }}</strong>
+            <span class="kpi-foot">Recent 10 completed</span>
+          </div>
+        </div>
       </div>
-
-      <div class="card view-payments">
-        <div class="card-icon">💰</div>
-        <h3>View Payments</h3>
-        <p>Track billing history</p>
-        <a href="{% url 'payment_list' %}" class="card-btn">View All</a>
-      </div>
-      <div class="card active-sessions">
-        <div class="card-icon">⏱️</div>
-        <h3>View Session Billing</h3>
-        <p>Monitor ongoing timers</p>
-        <a href="{% url 'active_sessions' %}" class="card-btn">Manage</a>
-      </div>
-      <div class="card total-students">
-        <div class="card-icon">📊</div>
-        <h3>Total Enrolled Students</h3>
-        <p class="card-metric">{{ students|length }} Students</p>
-        <a href="{% url 'students_list' %}" class="card-btn">View List</a>
+      <div class="hero-panel">
+        <div class="panel-label">Today's revenue</div>
+        <div class="panel-value">{{ revenue_today|floatformat:2 }} KSH</div>
+        <span class="trend-chip positive">Live billing stream</span>
+        <a href="{% url 'payment_list' %}" class="secondary-btn">View payments</a>
       </div>
     </section>
 
+    <section class="insights-grid">
+      <article class="insight-card primary">
+        <div>
+          <p class="insight-label">Outstanding balance</p>
+          <h3>{{ outstanding_balance|floatformat:2 }} KSH</h3>
+        </div>
+        <a href="{% url 'payment_list' %}" class="ghost-link">Review invoices →</a>
+      </article>
+      <article class="insight-card">
+        <div>
+          <p class="insight-label">Active sessions board</p>
+          <h3>{{ active_sessions_count }} running</h3>
+          <p class="insight-foot">Monitor timers & billing</p>
+        </div>
+        <a href="{% url 'active_sessions' %}" class="ghost-link">Open board →</a>
+      </article>
+      <article class="insight-card">
+        <div>
+          <p class="insight-label">Student directory</p>
+          <h3>{{ total_students }} profiles</h3>
+          <p class="insight-foot">Complete biodata & sessions</p>
+        </div>
+        <a href="{% url 'students_list' %}" class="ghost-link">Open list →</a>
+      </article>
+      <article class="insight-card accent">
+        <div>
+          <p class="insight-label">Average visit</p>
+          <h3>{{ avg_session_length }}</h3>
+          <p class="insight-foot">Helps plan machine turnover</p>
+        </div>
+        <a href="{% url 'summary_session' %}" class="ghost-link">Session summary →</a>
+      </article>
+    </section>
+
+    <section class="quick-actions">
+      <div class="section-header">
+        <h2>Quick actions</h2>
+        <p>Speed up your most-used workflows</p>
+      </div>
+      <div class="actions-grid">
+        <a href="{% url 'add_student' %}" class="action-tile">
+          <span class="action-icon">➕</span>
+          <div>
+            <h4>Add student</h4>
+            <p>Create a new profile in seconds.</p>
+          </div>
+        </a>
+        <a href="{% url 'add_payment' %}" class="action-tile">
+          <span class="action-icon">💸</span>
+          <div>
+            <h4>Record payment</h4>
+            <p>Attach receipts and clear balances.</p>
+          </div>
+        </a>
+        <a href="{% url 'active_sessions' %}" class="action-tile">
+          <span class="action-icon">⏱️</span>
+          <div>
+            <h4>Manage sessions</h4>
+            <p>End timers and push STK instantly.</p>
+          </div>
+        </a>
+        <a href="{% url 'students_list' %}" class="action-tile">
+          <span class="action-icon">🔍</span>
+          <div>
+            <h4>Find a student</h4>
+            <p>Search, update, or start a session.</p>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <div class="split-panels">
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Live floor</p>
+            <h3>Active sessions</h3>
+          </div>
+          <span class="panel-pill">{{ active_sessions_count }} live</span>
+        </div>
+        <ul class="session-list">
+          {% for session in active_sessions %}
+          <li>
+            <div>
+              <strong>{{ session.student.firstname }} {{ session.student.lastname }}</strong>
+              <p>Started {{ session.start_time|date:"H:i" }} • {{ session.duration_in_hours }}</p>
+            </div>
+            <span class="session-pill">KSH {{ session.billable_amount|floatformat:2 }}</span>
+          </li>
+          {% empty %}
+          <li class="empty-state">
+            <p>No running sessions. Start one from the student table below.</p>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <p class="panel-eyebrow">Money in</p>
+            <h3>Recent payments</h3>
+          </div>
+          <span class="panel-pill">Today {{ revenue_today|floatformat:2 }} KSH</span>
+        </div>
+        <ul class="activity-feed">
+          {% for payment in recent_payments %}
+          <li>
+            <div>
+              <strong>{{ payment.student.firstname }} {{ payment.student.lastname }}</strong>
+              <p>{{ payment.date|date:"M d" }} • Balance {{ payment.balance|floatformat:2 }} KSH</p>
+            </div>
+            <span class="amount-chip">+{{ payment.amount|floatformat:2 }}</span>
+          </li>
+          {% empty %}
+          <li class="empty-state">
+            <p>No payments recorded yet. Add your first one!</p>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
 
     {% if messages %}
     <ul class="messages">
@@ -76,57 +200,65 @@
     {% endif %}
 
     <section class="students-table">
-      <h2>Recent Students</h2>
+      <div class="section-header">
+        <div>
+          <h2>Students overview</h2>
+          <p>Monitor session status, reach out, or launch billing.</p>
+        </div>
+        <a href="{% url 'students_list' %}" class="secondary-btn">Open full directory</a>
+      </div>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Student Name</th>
-              <th>Student ID</th>
-              <th>Phone/Email</th>
-              <th>Session Start</th>
-              <th>Active Session</th>
-              <th>Total Hours</th>
+              <th>Student</th>
+              <th>ID</th>
+              <th>Phone</th>
+              <th>Session start</th>
+              <th>Status</th>
+              <th>Duration</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {% for student in students %}
             <tr>
-              <td>{{ student.firstname }} {{ student.lastname }}</td>
+              <td>
+                <div class="student-ident">
+                  <div class="avatar">{{ student.firstname|first }}{{ student.lastname|first }}</div>
+                  <div>
+                    <strong>{{ student.firstname }} {{ student.lastname }}</strong>
+                    <p>ID {{ student.idnumber }}</p>
+                  </div>
+                </div>
+              </td>
               <td>{{ student.idnumber }}</td>
               <td>{{ student.phonenumber }}</td>
               <td>
                 {% if student.active_start_time %}
-                {{ student.active_start_time|date:"M d, Y H:i" }}
+                {{ student.active_start_time|date:"M d, H:i" }}
                 {% else %}
-                N/A
+                —
                 {% endif %}
               </td>
               <td>
-                <span class="status-badge
-                {% if student.has_active_session %}
-                active
-                {% else %}
-                inactive
-                {% endif %}">
+                <span class="status-badge {% if student.has_active_session %}active{% else %}inactive{% endif %}">
                   {% if student.has_active_session %}
                   Active
                   {% else %}
-                  Inactive
+                  Idle
                   {% endif %}
                 </span>
               </td>
               <td>{{ student.duration_in_hours }}</td>
-              <td>
+              <td class="table-actions">
                 {% if student.has_active_session %}
-                <!-- End: POST form to end_session -->
-                <form method="post" action="{% url 'end_session' student.idnumber %}?next=home"
-                  style="display: inline;">
+                <form method="post" action="{% url 'end_session' student.idnumber %}?next=home">
                   {% csrf_token %}
                   <button type="submit" class="action-btn end-btn"
                     onclick="return confirm('End session for {{ student.firstname }} {{ student.lastname }}?')">
-                    End Session</button>
+                    End Session
+                  </button>
                 </form>
                 {% else %}
                 <a href="{% url 'start_session' student.idnumber %}" class="action-btn">Start Session</a>
