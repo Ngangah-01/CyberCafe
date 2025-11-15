@@ -25,7 +25,7 @@
         <p class="tagline">Live Floor Control</p>
       </div>
       <div class="header-meta">
-        <span class="today">{{ now|date:"l, M d" }}</span>
+        <span class="today">{% now "l, M d" %}</span>
         <div class="user-info">
           Monitoring in real time • stay sharp
         </div>
@@ -63,7 +63,7 @@
         </div>
         <div class="stat-card">
           <h4>Last refresh</h4>
-          <strong>{{ now|date:"H:i" }}</strong>
+          <strong>{% now "H:i" %}</strong>
           <p class="kpi-foot">local time</p>
         </div>
       </div>
