@@ -22,9 +22,7 @@ urlpatterns = [
     path("sessions/summary/", views.summary_session, name="summary_session"),
     path('start_session/<str:idnumber>/', views.start_session, name='start_session'),
     path('end_session/<str:idnumber>/', views.end_session, name='end_session'),
-
-    # mpesa urls
-    # path('send_stk/', views.sendSTK, name='send_stk'),
-    # path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
+    path('sessions/<int:session_id>/stk/', views.send_stk, name='send_stk'),
+    path('mpesa/callback/', views.mpesa_callback, name='mpesa_callback'),
     
     ]

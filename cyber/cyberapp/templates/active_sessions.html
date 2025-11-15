@@ -84,7 +84,10 @@
             </thead>
             <tbody>
               {% for session in sessions %}
-              <tr class="session-row" data-session-id="{{ session.id }}" data-student-id="{{ session.student.idnumber }}"
+              <tr class="session-row"
+                data-session-id="{{ session.id }}"
+                data-student-id="{{ session.student.idnumber }}"
+                data-phone="{{ session.student.phonenumber }}"
                 data-start="{{ session.start_time|date:'c' }}">
                 <td>{{ session.student.firstname }} {{ session.student.lastname }}</td>
                 <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
@@ -92,7 +95,7 @@
                 <td class="amount">0.00 KSH</td>
                 <td class="table-actions">
                   <button class="action-btn end-btn" onclick="endSession(this)">End Session</button>
-                  <button type="button" class="stk-btn" title="Available after ending session" onclick="sendSTK(this)">Send STK</button>
+                  <button type="button" class="stk-btn" title="Available after ending session" onclick="sendSTK(this)" disabled>Send STK</button>
                 </td>
               </tr>
               {% endfor %}

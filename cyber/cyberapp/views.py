@@ -1,19 +1,52 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from .models import Student, Payment, UsageSession
-from .forms import StudentForm, PaymentForm
+import json
+import logging
+from decimal import Decimal, ROUND_HALF_UP
+
+from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django_daraja.mpesa.core import MpesaClient
-import json
-from decimal import Decimal
+from django_daraja.mpesa.exceptions import (
+    IllegalPhoneNumberException,
+    MpesaConnectionError,
+    MpesaInvalidParameterException,
+)
+from django_daraja.mpesa.utils import format_phone_number as daraja_format_phone_number
+
+from .forms import StudentForm, PaymentForm
+from .models import Student, Payment, UsageSession
 
 
 # Create your views here.
+
+logger = logging.getLogger(__name__)
+
+
+def _prepare_phone_number(raw_phone: str) -> str:
+    """
+    Normalize phone numbers captured as integers/strings into a format that
+    django-daraja can validate (e.g. 07xx..., 7xx..., +2547xx...).
+    """
+    if raw_phone is None:
+        return ""
+
+    phone = str(raw_phone).strip()
+    phone = phone.replace(" ", "").replace("-", "")
+
+    if phone.startswith("+"):
+        phone = phone[1:]
+
+    if phone.isdigit() and len(phone) == 9 and phone.startswith("7"):
+        phone = f"0{phone}"
+
+    return phone
 
 @login_required
 def home(request):
@@ -151,6 +184,7 @@ def start_session(request, idnumber):
 
 
 # Update to views.py - end_session view
+@login_required
 def end_session(request, idnumber):
     student = get_object_or_404(Student, idnumber=idnumber)
     session = UsageSession.objects.filter(
@@ -163,8 +197,9 @@ def end_session(request, idnumber):
         if request.method == 'POST':
             session.end_time = timezone.now()
             session.is_active = False
-            session.save()
             amount_due = session.total_amount()
+            session.amount_charged = amount_due
+            session.save()
             
             # Add message only for non-AJAX (AJAX uses toast)
             if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -213,6 +248,142 @@ def summary_session(request):
         "session": latest_session,
     }
     return render(request, "summary_session.html", context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def send_stk(request, session_id):
+    session = get_object_or_404(UsageSession, pk=session_id)
+
+    if session.is_active or session.end_time is None:
+        return JsonResponse(
+            {'success': False, 'message': 'Please end the session before sending an STK push.'},
+            status=400
+        )
+
+    if request.content_type == "application/json":
+        try:
+            payload = json.loads(request.body or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid JSON payload.'}, status=400)
+    else:
+        payload = request.POST
+
+    phone_input = (payload.get('phone_number') or "").strip()
+    if not phone_input:
+        phone_input = str(session.student.phonenumber or "").strip()
+
+    phone_input = _prepare_phone_number(phone_input)
+    if not phone_input:
+        return JsonResponse({'success': False, 'message': 'Phone number is required.'}, status=400)
+
+    try:
+        formatted_phone = daraja_format_phone_number(phone_input)
+    except IllegalPhoneNumberException as exc:
+        return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+
+    amount = session.amount_charged or session.total_amount()
+    if amount <= 0:
+        return JsonResponse({'success': False, 'message': 'Amount due must be greater than zero.'}, status=400)
+
+    amount_integer = int(amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
+
+    callback_url = getattr(settings, 'MPESA_CALLBACK_URL', None)
+    if not callback_url or 'yourdomain' in callback_url:
+        callback_url = request.build_absolute_uri(reverse('mpesa_callback'))
+
+    client = MpesaClient()
+    try:
+        response = client.stk_push(
+            phone_number=formatted_phone,
+            amount=amount_integer,
+            account_reference=f"Session-{session.id}-{session.student.idnumber}",
+            transaction_desc=f"Cyber session {session.id}",
+            callback_url=callback_url
+        )
+    except (MpesaConnectionError, MpesaInvalidParameterException) as exc:
+        logger.exception("Failed to initiate STK push for session %s", session.id)
+        return JsonResponse({'success': False, 'message': str(exc)}, status=502)
+    except Exception:
+        logger.exception("Unexpected error during STK push for session %s", session.id)
+        return JsonResponse({'success': False, 'message': 'Could not initiate STK push.'}, status=500)
+
+    if response.get('ResponseCode') == '0':
+        session.payment_status = 'pending'
+        session.mpesa_checkout_request_id = response.get('CheckoutRequestID')
+        session.mpesa_phone_number = formatted_phone
+        session.save(update_fields=[
+            'payment_status',
+            'mpesa_checkout_request_id',
+            'mpesa_phone_number',
+            'amount_charged'
+        ])
+        return JsonResponse({
+            'success': True,
+            'message': 'STK push sent. Ask the customer to check their phone.',
+            'checkout_request_id': session.mpesa_checkout_request_id
+        })
+
+    logger.warning("STK push rejected for session %s: %s", session.id, response)
+    return JsonResponse({
+        'success': False,
+        'message': response.get('errorMessage', 'STK push rejected by Safaricom.')
+    }, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def mpesa_callback(request):
+    """
+    Endpoint Safaricom hits with the result of an STK push. Must be publicly reachable.
+    """
+    try:
+        body = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON'}, status=400)
+
+    callback = body.get('Body', {}).get('stkCallback', {})
+    checkout_request_id = callback.get('CheckoutRequestID')
+    result_code = callback.get('ResultCode')
+
+    session = UsageSession.objects.filter(mpesa_checkout_request_id=checkout_request_id).first()
+    if not session:
+        logger.warning("Received callback for unknown CheckoutRequestID %s", checkout_request_id)
+    else:
+        if result_code == 0:
+            metadata = callback.get('CallbackMetadata', {}).get('Item', [])
+            metadata_map = {item.get('Name'): item.get('Value') for item in metadata if item.get('Name')}
+
+            amount_value = metadata_map.get('Amount')
+            receipt_number = metadata_map.get('MpesaReceiptNumber')
+            phone_number = metadata_map.get('PhoneNumber')
+
+            session.payment_status = 'paid'
+            session.mpesa_receipt_number = receipt_number
+            if phone_number:
+                session.mpesa_phone_number = str(phone_number)
+            if amount_value is not None:
+                try:
+                    session.amount_charged = Decimal(str(amount_value))
+                except Exception:
+                    pass
+            session.save(update_fields=[
+                'payment_status',
+                'mpesa_receipt_number',
+                'mpesa_phone_number',
+                'amount_charged'
+            ])
+        else:
+            result_desc = callback.get('ResultDesc', 'Payment failed')
+            if session:
+                session.payment_status = 'failed'
+                session.save(update_fields=['payment_status'])
+            logger.info("STK payment failed for checkout %s: %s", checkout_request_id, result_desc)
+
+    return JsonResponse({
+        'ResultCode': 0,
+        'ResultDesc': 'Accepted'
+    })
 
 # login function view
 def login_view(request):

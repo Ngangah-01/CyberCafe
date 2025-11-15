@@ -1,5 +1,8 @@
 // static/js/active_sessions
 document.addEventListener('DOMContentLoaded', function () {
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
+
     // Realtime timers for each active session
     document.querySelectorAll('.session-row').forEach(function (row) {
         const startStr = row.dataset.start;
@@ -44,68 +47,116 @@ document.addEventListener('DOMContentLoaded', function () {
         const row = button.closest('.session-row');
         const sessionId = row.dataset.sessionId;
         const studentId = row.dataset.studentId;
+    
+        if (!csrfToken) {
+            showMessage('CSRF token missing. Refresh the page.', 'error');
+            console.error('No CSRF token found');
+            return;
+        }
 
-        const csrfMeta = document.querySelector('meta[name="csrf-token"]');  // Fixed: lowercase 'csrf-token'
-    const csrfToken = csrfMeta ? csrfMeta.getAttribute('content') : null;
-    
-    if (!csrfToken) {
-        showMessage('CSRF token missing. Refresh the page.', 'error');
-        console.error('No CSRF token found');
-        return;
-    }
-    
-    console.log('CSRF Token:', csrfToken);  // Debug: Should log a token like 'abc123...'
-    console.log('Fetching:', `/end_session/${studentId}/`);  // Debug: URL
-    
-    fetch(`/end_session/${studentId}/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRFToken': csrfToken  // Now correct
-        },
-        body: JSON.stringify({ session_id: sessionId })
-    })
-    .then(response => {
-        console.log('Response Status:', response.status);  // Debug: e.g., 200 OK
-        if (!response.ok) {
-            return response.text().then(text => {  // For non-OK, read as text (HTML) for debug
-                console.error('Error Response Body:', text.substring(0, 200) + '...');  // Log first 200 chars
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        fetch(`/end_session/${studentId}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ session_id: sessionId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.text().then(text => {
+                    console.error('Error Response Body:', text.substring(0, 200) + '...');
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.status === 'success') {
+                row.classList.remove('session-row');
+                row.classList.add('ended-row');
+                button.textContent = 'Session Ended';
+                button.disabled = true;
+                button.style.background = 'linear-gradient(135deg, #6c757d, #545b62)';
+                const stkBtn = row.querySelector('.stk-btn');
+                if (stkBtn) {
+                    stkBtn.disabled = false;
+                    stkBtn.classList.add('action-btn');
+                    stkBtn.textContent = 'Send STK';
+                }
+                row.querySelector('.elapsed').textContent = 'Ended';
+                row.querySelector('.amount').textContent = data.amount + ' KSH';
+                showMessage(`Session ended for ${row.cells[0].textContent}. Amount due: ${data.amount} KSH.`, 'success');
+            } else {
+                showMessage(data.message || 'Error ending session: ' + data.status, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Full Error:', error);
+            showMessage('Network error: ' + (error.message || 'Check console for details'), 'error');
+        });
+    };
+
+    window.sendSTK = function (button) {
+        if (button.disabled) {
+            showMessage('End the session first to send an STK push.', 'error');
+            return;
+        }
+
+        const row = button.closest('tr');
+        const sessionId = row.dataset.sessionId;
+        let defaultPhone = row.dataset.phone || '';
+        if (defaultPhone && defaultPhone.length === 9 && defaultPhone.startsWith('7')) {
+            defaultPhone = `0${defaultPhone}`;
+        }
+
+        const phone = prompt('Enter the customer phone number (07xx or 2547xx):', defaultPhone);
+        if (phone === null) {
+            return; // user cancelled
+        }
+
+        if (!phone.trim()) {
+            showMessage('Phone number cannot be empty.', 'error');
+            return;
+        }
+
+        if (!csrfToken) {
+            showMessage('CSRF token missing. Refresh the page.', 'error');
+            return;
+        }
+
+        const originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Sending...';
+
+        fetch(`/sessions/${sessionId}/stk/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ phone_number: phone })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'STK push failed');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                showMessage(data.message || 'STK push sent.', 'success');
+                button.textContent = 'STK Sent';
+            })
+            .catch(error => {
+                showMessage(error.message || 'Failed to send STK push.', 'error');
+                button.disabled = false;
+                button.textContent = originalText;
             });
-        }
-        return response.json();  // Parse JSON only on OK
-    })
-    .then(data => {
-        console.log('Response Data:', data);  // Debug: {status: 'success', amount: '1.67'}
-        if (data.status === 'success') {
-            // On success: Update row to "ended" state, enable STK
-            row.classList.remove('session-row');
-            row.classList.add('ended-row');
-            button.textContent = 'Session Ended';
-            button.disabled = true;
-            button.style.background = 'linear-gradient(135deg, #6c757d, #545b62)';
-            const stkBtn = row.querySelector('.stk-btn');
-            stkBtn.disabled = false;
-            stkBtn.classList.remove('stk-btn');
-            stkBtn.classList.add('action-btn');
-            stkBtn.textContent = 'Send STK';
-            stkBtn.onclick = function () {  // Your sendSTK placeholder
-                alert('STK Push Logic Here - Integrate M-Pesa/Daraja API');
-            };
-            row.querySelector('.elapsed').textContent = 'Ended';
-            row.querySelector('.amount').textContent = data.amount + ' KSH';  // Server final amount
-            // Enhanced toast notification (your desired flow: notify + enable STK)
-            showMessage(`Session ended for ${row.cells[0].textContent}. Amount due: ${data.amount} KSH.`, 'success');
-        } else {
-            showMessage(data.message || 'Error ending session: ' + data.status, 'error');
-        }
-    })
-    .catch(error => {
-        console.error('Full Error:', error);  // Debug: Full error object
-        showMessage('Network error: ' + (error.message || 'Check console for details'), 'error');
-    });
-};
+    };
     // Enhanced toast notification function
     function showMessage(text, type) {
         // Remove existing toasts
