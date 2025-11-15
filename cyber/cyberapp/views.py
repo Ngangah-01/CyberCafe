@@ -93,7 +93,14 @@ def _send_stk_request(*, phone_input, amount_decimal, account_reference, transac
         logger.exception("Unexpected STK error")
         raise RuntimeError(f"Could not initiate STK push: {exc}") from exc
 
-    response_data = response.response_data if hasattr(response, "response_data") else response
+    if hasattr(response, "json"):
+        try:
+            response_data = response.json()
+        except ValueError:
+            response_data = {}
+    else:
+        response_data = response
+
     return response_data, formatted_phone
 
 
