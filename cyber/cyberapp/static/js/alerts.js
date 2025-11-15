@@ -32,28 +32,25 @@ function mapLevelToIcon(level) {
   }
 }
 
-function showToast(message, level = 'info') {
+function showAlert(message, level = 'info') {
   if (!message) return;
   loadSweetAlert()
     .then(() => {
       Swal.fire({
-        toast: true,
-        position: 'top-end',
         icon: mapLevelToIcon(level),
         title: message,
-        showConfirmButton: false,
-        timer: 3500,
-        timerProgressBar: true,
+        confirmButtonText: 'OK',
+        confirmButtonColor: '#2563eb',
+        backdrop: true,
       });
     })
     .catch((error) => {
       console.error(error);
-      // Fallback to native alert if SweetAlert fails to load
       alert(message);
     });
 }
 
-window.showToast = showToast;
+window.showAlert = showAlert;
 
 document.addEventListener('DOMContentLoaded', () => {
   const messageContainers = document.querySelectorAll('.messages');
@@ -80,12 +77,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Hide original message list once captured
     container.style.display = 'none';
   });
 
   if (alerts.length) {
-    alerts.forEach(({ text, level }) => showToast(text, level));
+    // show the most recent message so modals don't stack
+    const latest = alerts[alerts.length - 1];
+    showAlert(latest.text, latest.level);
   }
 });
 
