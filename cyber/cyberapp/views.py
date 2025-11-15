@@ -196,6 +196,24 @@ def active_sessions(request):
     }
     return render(request, 'active_sessions.html', context)
 
+@login_required
+def summary_session(request):
+    """
+    Display a quick summary of the most recent session (completed if available,
+    otherwise the latest active one) so the "Session summary" action on the
+    dashboard always has a destination.
+    """
+    latest_session = (
+        UsageSession.objects.select_related("student")
+        .order_by("-end_time", "-start_time")
+        .first()
+    )
+
+    context = {
+        "session": latest_session,
+    }
+    return render(request, "summary_session.html", context)
+
 # login function view
 def login_view(request):
     if request.method == 'POST':

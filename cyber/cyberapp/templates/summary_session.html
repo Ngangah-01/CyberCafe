@@ -7,11 +7,17 @@
 </head>
 <body>
     <h1>Session summary</h1>
-    <p>Student: {{ session.student.fistname }} {{ session.student.lastname }}</p>
-    <p>Start time: {{ session.start_time }}</p>
-    <p>End time: {{ session.end_time }}</p>
-    <p>Duration: {{ session.duration_in_hours|floatformat:2 }} hours</p>
-    <p><strong> Total cost: KSh {{ session.total_amount }} </strong></p>
+
+    {% if session %}
+        <p>Student: {{ session.student.firstname }} {{ session.student.lastname }}</p>
+        <p>Start time: {{ session.start_time }}</p>
+        <p>End time: {{ session.end_time|default:"In progress" }}</p>
+        <p>Duration: {{ session.duration_in_hours }}</p>
+        <p><strong>Total cost: KSh {{ session.total_amount|floatformat:2 }}</strong></p>
+    {% else %}
+        <p>No sessions have been recorded yet. Start a session to see its summary here.</p>
+    {% endif %}
+
     <a href="{% url 'home' %}">Back to Home</a>
 </body>
 </html>

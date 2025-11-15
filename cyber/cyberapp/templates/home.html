@@ -9,7 +9,13 @@
   <title>Home - Daryeel Cyber Cafe</title>
 </head>
 
-<body>
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
   <header class="header">
     <div class="header-content">
       <div class="brand-cluster">
@@ -65,6 +71,29 @@
         <div class="panel-value">{{ revenue_today|floatformat:2 }} KSH</div>
         <span class="trend-chip positive">Live billing stream</span>
         <a href="{% url 'payment_list' %}" class="secondary-btn">View payments</a>
+      </div>
+    </section>
+
+    <section class="status-ribbon" aria-label="Realtime signals">
+      <div class="status-chip">
+        <span class="chip-label">Floor occupancy</span>
+        <strong>{{ utilization_rate }}%</strong>
+        <span class="chip-foot">capacity</span>
+      </div>
+      <div class="status-chip">
+        <span class="chip-label">Active sessions</span>
+        <strong>{{ active_sessions_count }}</strong>
+        <span class="chip-foot">running now</span>
+      </div>
+      <div class="status-chip">
+        <span class="chip-label">Revenue today</span>
+        <strong>{{ revenue_today|floatformat:2 }} KSH</strong>
+        <span class="chip-foot">cleared</span>
+      </div>
+      <div class="status-chip">
+        <span class="chip-label">Outstanding balance</span>
+        <strong>{{ outstanding_balance|floatformat:2 }} KSH</strong>
+        <span class="chip-foot">to collect</span>
       </div>
     </section>
 
@@ -206,6 +235,30 @@
           <p>Monitor session status, reach out, or launch billing.</p>
         </div>
         <a href="{% url 'students_list' %}" class="secondary-btn">Open full directory</a>
+      </div>
+      <div class="table-toolbar">
+        <div class="filter-pills">
+          <span class="filter-pill active-pill">
+            <span class="dot all"></span>
+            All students
+          </span>
+          <a href="{% url 'active_sessions' %}" class="filter-pill">
+            <span class="dot live"></span>
+            Active board
+          </a>
+          <a href="{% url 'students_list' %}" class="filter-pill">
+            <span class="dot idle"></span>
+            Directory view
+          </a>
+        </div>
+        <div class="table-legend">
+          <span class="legend-item">
+            <span class="dot live"></span> Active
+          </span>
+          <span class="legend-item">
+            <span class="dot idle"></span> Idle
+          </span>
+        </div>
       </div>
       <div class="table-container">
         <table>

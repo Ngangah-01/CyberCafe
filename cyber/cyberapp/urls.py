@@ -19,6 +19,7 @@ urlpatterns = [
     path('delete_payment/<int:payment_id>/', views.delete_payment, name='delete_payment'),
 
     path("sessions/active/", views.active_sessions, name="active_sessions"),
+    path("sessions/summary/", views.summary_session, name="summary_session"),
     path('start_session/<str:idnumber>/', views.start_session, name='start_session'),
     path('end_session/<str:idnumber>/', views.end_session, name='end_session'),
 
