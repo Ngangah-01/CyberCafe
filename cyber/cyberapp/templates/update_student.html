@@ -1,17 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>update</title>
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Update student - Daryeel Cyber Cafe</title>
 </head>
-<body>
-  <h1>Update Student</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Update Student</button>
-  </form>
-  <a href="{% url 'students_list' %}">Back to Student List</a>
+
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Refresh profile data</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">Keep contact info accurate</div>
+      </div>
+    </div>
+  </header>
+
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li class="alert alert-success">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Directory</p>
+        <h1>Update student</h1>
+        <p class="page-meta">Edit personal info, ID numbers, or phone contacts and keep your directory clean.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'students_list' %}" class="btn btn-secondary">Back to list</a>
+        <a href="{% url 'home' %}" class="btn btn-ghost">Dashboard</a>
+      </div>
+    </div>
+
+    <section class="form-card">
+      <h2>Profile fields</h2>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+          <button type="submit" class="form-submit-btn">Update student</button>
+          <a href="{% url 'students_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </main>
 </body>
+
 </html>

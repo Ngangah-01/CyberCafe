@@ -1,23 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Session summary</title>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Session summary - Daryeel Cyber Cafe</title>
 </head>
-<body>
-    <h1>Session summary</h1>
 
-    {% if session %}
-        <p>Student: {{ session.student.firstname }} {{ session.student.lastname }}</p>
-        <p>Start time: {{ session.start_time }}</p>
-        <p>End time: {{ session.end_time|default:"In progress" }}</p>
-        <p>Duration: {{ session.duration_in_hours }}</p>
-        <p><strong>Total cost: KSh {{ session.total_amount|floatformat:2 }}</strong></p>
-    {% else %}
-        <p>No sessions have been recorded yet. Start a session to see its summary here.</p>
-    {% endif %}
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
 
-    <a href="{% url 'home' %}">Back to Home</a>
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Latest session snapshot</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">Pulled from the sessions log</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Sessions</p>
+        <h1>Recent session summary</h1>
+        <p class="page-meta">A quick glance at the latest completed or active timer so you can reconcile charges fast.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'active_sessions' %}" class="btn btn-secondary">Active board</a>
+        <a href="{% url 'home' %}" class="btn btn-ghost">Dashboard</a>
+      </div>
+    </div>
+
+    <section class="detail-card">
+      {% if session %}
+      <div class="meta-list">
+        <div class="meta-item">
+          <span>Student</span>
+          <strong>{{ session.student.firstname }} {{ session.student.lastname }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Start</span>
+          <strong>{{ session.start_time|date:"M d, H:i" }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>End</span>
+          <strong>{{ session.end_time|date:"M d, H:i"|default:"In progress" }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Duration</span>
+          <strong>{{ session.duration_in_hours }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Total cost</span>
+          <strong>KSH {{ session.total_amount|floatformat:2 }}</strong>
+        </div>
+      </div>
+      {% else %}
+      <div class="no-sessions">
+        <p>No sessions have been recorded yet. Start one from the dashboard to populate this space.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <div class="page-foot-links">
+      <a href="{% url 'home' %}" class="link-arrow">← Back to dashboard</a>
+      <a href="{% url 'active_sessions' %}" class="btn btn-secondary">Go to active sessions</a>
+    </div>
+  </main>
 </body>
+
 </html>

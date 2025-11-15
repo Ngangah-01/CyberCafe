@@ -1,22 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{student.firstname}}</title>
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>{{ student.firstname }} {{ student.lastname }} • Daryeel Cyber Cafe</title>
 </head>
-<body>
-  <h1>{{ student.firstname }}</h1>
-  <p>ID: {{ student.idnumber }}</p>
-  <p>phone Number: {{ student.phonenumber }}</p>
 
-  <h2>{{Payments}}</h2>
-  <ul>
-    {% for payment in payments %}
-      <li>Amount: {{ payment.amount }} | Date: {{ payment.date }} | Balance:{{payment.balance}} </li>
-    {% empty %}
-      <li>No payments found for this student.</li>
-    {% endfor %}
-  <a href="{% url 'students_list' %}">Back to Student List</a>
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Student profile</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">All history in one card</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Profile</p>
+        <h1>{{ student.firstname }} {{ student.lastname }}</h1>
+        <p class="page-meta">Manage sessions, contact details, and payment history for this customer.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'start_session' student.idnumber %}" class="btn btn-primary">Start session</a>
+        <a href="{% url 'update_student' student.idnumber %}" class="btn btn-secondary">Edit profile</a>
+        <a href="{% url 'students_list' %}" class="btn btn-ghost">Directory</a>
+      </div>
+    </div>
+
+    <section class="detail-card">
+      <div class="meta-list">
+        <div class="meta-item">
+          <span>ID number</span>
+          <strong>{{ student.idnumber }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Phone</span>
+          <strong>{{ student.phonenumber }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="data-card">
+      <h2>Payments</h2>
+      {% if payments %}
+      <ul class="timeline">
+        {% for payment in payments %}
+        <li>
+          <div>
+            <strong>KSH {{ payment.amount|floatformat:2 }}</strong>
+            <p class="kpi-foot">{{ payment.date|date:"M d, Y" }}</p>
+          </div>
+          <span class="badge">Balance {{ payment.balance|floatformat:2 }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="no-sessions">
+        <p>No payments found for this student yet.</p>
+      </div>
+      {% endif %}
+      <div class="form-actions">
+        <a href="{% url 'add_payment' %}" class="btn btn-primary">Record payment</a>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Back to dashboard</a>
+      </div>
+    </section>
+  </main>
 </body>
+
 </html>
