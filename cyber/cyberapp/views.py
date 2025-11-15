@@ -245,15 +245,46 @@ def delete_payment(request, payment_id):
     messages.success(request, f'Payment {payment_name} deleted successfully.')
     return redirect('payment_list')
 
+@login_required
 def add_payment(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = PaymentForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('payment_list')
+            payment = form.save(commit=False)
+            phone_override = form.cleaned_data.get("phone_number")
+            phone_source = phone_override or payment.student.phonenumber
+
+            try:
+                response, formatted_phone = _send_stk_request(
+                    phone_input=phone_source,
+                    amount_decimal=payment.amount,
+                    account_reference=f"Pay-{payment.student.idnumber}",
+                    transaction_desc=f"Payment {payment.date:%m%d}",
+                    request=request,
+                )
+            except ValueError as exc:
+                form.add_error("phone_number", str(exc))
+            except RuntimeError as exc:
+                form.add_error(None, str(exc))
+            else:
+                if response.get("ResponseCode") == "0":
+                    payment.mpesa_status = Payment.STATUS_PENDING
+                    payment.mpesa_checkout_request_id = response.get("CheckoutRequestID")
+                    payment.mpesa_phone_number = formatted_phone
+                    payment.save()
+                    messages.success(
+                        request,
+                        "Payment saved and STK push sent. Ask the customer to enter their PIN.",
+                    )
+                    return redirect("payment_list")
+                else:
+                    form.add_error(
+                        None,
+                        response.get("errorMessage", "STK push rejected by Safaricom."),
+                    )
     else:
         form = PaymentForm()
-    return render(request, 'add_payment.html', {'form': form})
+    return render(request, "add_payment.html", {"form": form})
 
 # update student function
 @login_required
@@ -387,40 +418,21 @@ def send_stk(request, session_id):
     if not phone_input:
         phone_input = str(session.student.phonenumber or "").strip()
 
-    phone_input = _prepare_phone_number(phone_input)
-    if not phone_input:
-        return JsonResponse({'success': False, 'message': 'Phone number is required.'}, status=400)
-
-    try:
-        formatted_phone = daraja_format_phone_number(phone_input)
-    except IllegalPhoneNumberException as exc:
-        return JsonResponse({'success': False, 'message': str(exc)}, status=400)
-
     amount = session.amount_charged or session.total_amount()
-    if amount <= 0:
-        return JsonResponse({'success': False, 'message': 'Amount due must be greater than zero.'}, status=400)
 
-    amount_integer = int(amount.quantize(Decimal('1'), rounding=ROUND_HALF_UP))
-
-    callback_url = getattr(settings, 'MPESA_CALLBACK_URL', None)
-    if not callback_url or 'yourdomain' in callback_url:
-        callback_url = request.build_absolute_uri(reverse('mpesa_callback'))
-
-    client = MpesaClient()
     try:
-        response = client.stk_push(
-            phone_number=formatted_phone,
-            amount=amount_integer,
+        response, formatted_phone = _send_stk_request(
+            phone_input=phone_input,
+            amount_decimal=amount,
             account_reference=f"Session-{session.id}-{session.student.idnumber}",
-            transaction_desc=f"Cyber session {session.id}",
-            callback_url=callback_url
+            transaction_desc=f"Session {session.id}",
+            request=request,
         )
-    except (MpesaConnectionError, MpesaInvalidParameterException) as exc:
-        logger.exception("Failed to initiate STK push for session %s", session.id)
+    except ValueError as exc:
+        return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+    except RuntimeError as exc:
+        logger.exception("STK push error for session %s", session.id)
         return JsonResponse({'success': False, 'message': str(exc)}, status=502)
-    except Exception:
-        logger.exception("Unexpected error during STK push for session %s", session.id)
-        return JsonResponse({'success': False, 'message': 'Could not initiate STK push.'}, status=500)
 
     if response.get('ResponseCode') == '0':
         session.payment_status = 'pending'
