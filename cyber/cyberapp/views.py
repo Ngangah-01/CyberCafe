@@ -90,7 +90,8 @@ def _send_stk_request(*, phone_input, amount_decimal, account_reference, transac
     except (MpesaConnectionError, MpesaInvalidParameterException) as exc:
         raise RuntimeError(str(exc)) from exc
     except Exception as exc:  # pragma: no cover - safety net
-        raise RuntimeError("Could not initiate STK push.") from exc
+        logger.exception("Unexpected STK error")
+        raise RuntimeError(f"Could not initiate STK push: {exc}") from exc
 
     return response, formatted_phone
 
