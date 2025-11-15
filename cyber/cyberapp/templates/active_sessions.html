@@ -2,95 +2,121 @@
 <html lang="en">
 
 <head>
-    {% load static %}
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% csrf_token %}
-    <meta name="csrf-token" content="{{ csrf_token }}">
-    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
-    <title>Active Sessions - Daryeel Cyber Cafe</title>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Active Sessions - Daryeel Cyber Cafe</title>
 </head>
 
-<body>
-    <header class="header">
-        <div class="header-content">
-            <div class="logo">🖥️ Daryeel Cyber Cafe</div>
-            <h1>Active Sessions</h1>
-            <div class="user-info">{{ now|date:"M d, Y" }} • Monitor ongoing sessions</div>
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Live Floor Control</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">
+          Monitoring in real time • stay sharp
         </div>
-    </header>
-
-    {% if messages %}
-    <ul class="messages">
-        {% for message in messages %}
-        <li class="alert alert-success">{{ message }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-
-    <main class="main-content">
-        <section class="sessions-table">
-            <h2>Current Active Sessions</h2>
-            {% if sessions %}
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Student Name</th>
-                            <th>Start Time</th>
-                            <th>Elapsed Time</th>
-                            <th>Amount Due</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for session in sessions %}
-                        <tr class="session-row" data-session-id="{{ session.id }}"
-                            data-student-id="{{ session.student.idnumber }}"
-                            data-start="{{ session.start_time|date:'c' }}">
-                            <td>{{ session.student.firstname }} {{ session.student.lastname }}</td>
-                            <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
-                            <td class="elapsed">00:00:00</td>
-                            <td class="amount">0.00 KSH</td>
-                            <td>
-                                <button class="action-btn end-btn" onclick="endSession(this)">End Session</button>
-                                <button type="button" class="stk-btn" title="Available after ending session" onclick="sendSTK(this)">Send STK</button>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <div class="no-sessions">
-                <p>No active sessions. All clear!</p>
-            </div>
-            {% endif %}
-        </section>
-    </main>
-
-    <a href="{% url 'home' %}" class="back-link">← Back to Dashboard</a>
-
-    <!-- STK Send Modal -->
-<!-- <div id="stkModal" class="modal">
-    <div class="modal-content">
-        <span class="close">&times;</span>
-        <h3>Send M-Pesa STK Prompt</h3>
-        <p>Enter the phone number (e.g., 0712345678) for Session ID: <span id="sessionIdDisplay"></span></p>
-        <form id="stkForm">
-            <label for="phoneNumber">Phone Number:</label>
-            <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="0712345678" required pattern="[0-7][0-9]{9}">
-            <div class="form-row">
-                <button type="submit" class="send-btn">Send STK</button>
-                <button type="button" class="cancel-btn" onclick="closeSTKModal()">Cancel</button>
-            </div>
-        </form>
+      </div>
     </div>
-</div> -->
+  </header>
 
-<!-- Your existing back-link and script tag here -->
+  {% if messages %}
+  <ul class="messages">
+    {% for message in messages %}
+    <li class="alert alert-success">{{ message }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
 
-    <script src="{% static 'js/scripts.js' %}"></script>
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Live floor</p>
+        <h1>Active sessions</h1>
+        <p class="page-meta">Track timers, charges, and available machines without leaving the command center.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'students_list' %}" class="btn btn-secondary">Find student</a>
+        <a href="{% url 'home' %}" class="btn btn-ghost">Dashboard</a>
+      </div>
+    </div>
+
+    <section class="data-card">
+      <div class="stat-grid">
+        <div class="stat-card">
+          <h4>Sessions running</h4>
+          <strong>{{ sessions|length }}</strong>
+          <p class="kpi-foot">machines occupied</p>
+        </div>
+        <div class="stat-card">
+          <h4>Last refresh</h4>
+          <strong>{% now "H:i" %}</strong>
+          <p class="kpi-foot">local time</p>
+        </div>
+      </div>
+
+      <div class="sessions-table">
+        <h2>Current Active Sessions</h2>
+        {% if sessions %}
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Student Name</th>
+                <th>Start Time</th>
+                <th>Elapsed Time</th>
+                <th>Amount Due</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for session in sessions %}
+              <tr class="session-row"
+                data-session-id="{{ session.id }}"
+                data-student-id="{{ session.student.idnumber }}"
+                data-phone="{{ session.student.phonenumber }}"
+                data-start="{{ session.start_time|date:'c' }}">
+                <td>{{ session.student.firstname }} {{ session.student.lastname }}</td>
+                <td>{{ session.start_time|date:"M d, Y H:i" }}</td>
+                <td class="elapsed">00:00:00</td>
+                <td class="amount">0.00 KSH</td>
+                <td class="table-actions">
+                  <button class="action-btn end-btn" onclick="endSession(this)">End Session</button>
+                  <button type="button" class="stk-btn" title="Available after ending session" onclick="sendSTK(this)" disabled>Send STK</button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <div class="no-sessions">
+          <p>No active sessions. All machines ready for use.</p>
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <div class="page-foot-links">
+      <a href="{% url 'home' %}" class="link-arrow">← Back to dashboard</a>
+      <a href="{% url 'add_student' %}" class="btn btn-secondary">Add new student</a>
+    </div>
+  </main>
+  <script defer src="{% static 'js/alerts.js' %}"></script>
+  <script defer src="{% static 'js/scripts.js' %}"></script>
 </body>
 
 </html>

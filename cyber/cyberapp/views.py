@@ -1,31 +1,183 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from .models import Student, Payment, UsageSession
-from .forms import StudentForm, PaymentForm
+import json
+import logging
+from datetime import timedelta
+from decimal import Decimal, ROUND_HALF_UP
+
+from django.conf import settings
 from django.contrib import messages
-from django.http import JsonResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.db.models import Sum
+from django.http import JsonResponse
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django_daraja.mpesa.core import MpesaClient
-import json
-from decimal import Decimal
+from django_daraja.mpesa.exceptions import (
+    IllegalPhoneNumberException,
+    MpesaConnectionError,
+    MpesaInvalidParameterException,
+)
+from django_daraja.mpesa.utils import format_phone_number as daraja_format_phone_number
+
+from .forms import StudentForm, PaymentForm
+from .models import Student, Payment, UsageSession
 
 
 # Create your views here.
 
+logger = logging.getLogger(__name__)
+
+
+TOTAL_MACHINES = 30
+
+
+def _prepare_phone_number(raw_phone: str) -> str:
+    """
+    Normalize phone numbers captured as integers/strings into a format that
+    django-daraja can validate (e.g. 07xx..., 7xx..., +2547xx...).
+    """
+    if raw_phone is None:
+        return ""
+
+    phone = str(raw_phone).strip()
+    phone = phone.replace(" ", "").replace("-", "")
+
+    if phone.startswith("+"):
+        phone = phone[1:]
+
+    if phone.isdigit() and len(phone) == 9 and phone.startswith("7"):
+        phone = f"0{phone}"
+
+    return phone
+
+
+def _resolve_callback_url(request):
+    callback_url = getattr(settings, "MPESA_CALLBACK_URL", "")
+    if not callback_url or "yourdomain.com" in callback_url:
+        callback_url = request.build_absolute_uri(reverse("mpesa_callback"))
+    return callback_url
+
+
+def _send_stk_request(*, phone_input, amount_decimal, account_reference, transaction_desc, request):
+    phone_input = _prepare_phone_number(phone_input)
+    if not phone_input:
+        raise ValueError("Phone number is required for STK push.")
+
+    try:
+        formatted_phone = daraja_format_phone_number(phone_input)
+    except IllegalPhoneNumberException as exc:
+        raise ValueError(str(exc)) from exc
+
+    amount_decimal = Decimal(amount_decimal)
+    if amount_decimal <= 0:
+        raise ValueError("Amount must be greater than zero.")
+
+    amount_integer = int(amount_decimal.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    callback_url = _resolve_callback_url(request)
+
+    client = MpesaClient()
+    try:
+        response = client.stk_push(
+            phone_number=formatted_phone,
+            amount=amount_integer,
+            account_reference=account_reference[:12],
+            transaction_desc=transaction_desc[:13],
+            callback_url=callback_url,
+        )
+    except (MpesaConnectionError, MpesaInvalidParameterException) as exc:
+        raise RuntimeError(str(exc)) from exc
+    except Exception as exc:  # pragma: no cover - safety net
+        logger.exception("Unexpected STK error")
+        raise RuntimeError(f"Could not initiate STK push: {exc}") from exc
+
+    if hasattr(response, "json"):
+        try:
+            response_data = response.json()
+        except ValueError:
+            response_data = {}
+    else:
+        response_data = response
+
+    return response_data, formatted_phone
+
+
+def _format_duration(seconds: int) -> str:
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+
 @login_required
 def home(request):
-    #optimize queries with prefetch_related to reduce DB hits/N+1 problem
-    students = Student.objects.prefetch_related('usagesession_set').all()
-    
+    """
+    Feed every dashboard widget with realtime, financial, and roster data.
+    """
+    now = timezone.now()
+
+    students = list(
+        Student.objects.prefetch_related("usagesession_set")
+        .order_by("firstname", "lastname")
+    )
+
+    active_sessions = list(
+        UsageSession.objects.filter(is_active=True, end_time__isnull=True)
+        .select_related("student")
+        .order_by("start_time")
+    )
+    active_sessions_count = len(active_sessions)
+
+    utilization_rate = 0
+    if TOTAL_MACHINES:
+        utilization_rate = min(
+            100,
+            round((active_sessions_count / TOTAL_MACHINES) * 100),
+        )
+
+    total_students = Student.objects.count()
+    sessions_started_today = UsageSession.objects.filter(
+        start_time__date=now.date()
+    ).count()
+
+    recent_completed_sessions = list(
+        UsageSession.objects.filter(end_time__isnull=False)
+        .order_by("-end_time")[:10]
+    )
+    avg_session_length = "00:00:00"
+    if recent_completed_sessions:
+        total_seconds = sum(
+            (session.end_time - session.start_time).total_seconds()
+            for session in recent_completed_sessions
+        )
+        avg_session_length = _format_duration(
+            int(total_seconds / len(recent_completed_sessions))
+        )
+
+    revenue_today = (
+        Payment.objects.filter(date=now.date())
+        .aggregate(total=Sum("amount"))
+        .get("total")
+    ) or Decimal("0.00")
+
+    outstanding_balance = (
+        Payment.objects.filter(balance__gt=0)
+        .aggregate(total=Sum("balance"))
+        .get("total")
+    ) or Decimal("0.00")
+
+    recent_payments = list(
+        Payment.objects.select_related("student")
+        .order_by("-date", "-id")[:6]
+    )
+
     for student in students:
         sessions = student.usagesession_set.all()
-        
-        # Check for active session (is_active=True and no end_time)
-        active_session = next((s for s in sessions if s.is_active and not s.end_time), None)
-        
+        active_session = next(
+            (s for s in sessions if s.is_active and not s.end_time), None
+        )
         if active_session:
             student.active_start_time = active_session.start_time
             student.has_active_session = True
@@ -33,18 +185,22 @@ def home(request):
         else:
             student.active_start_time = None
             student.has_active_session = False
-            student.duration_in_hours = "N/A"
-        
-        # Total hours from completed sessions only (end_time not null)
-        # completed_sessions = [s for s in sessions if s.end_time]
-        # total_hours = sum(s.duration_in_hours() for s in completed_sessions)
-        # student.total_hours = round(total_hours, 1)  # 1 decimal for display
-    
+            student.duration_in_hours = "—"
+
     context = {
-        'students': students,
-        'now': timezone.now(),  # For header date if needed
+        "students": students,
+        "now": now,
+        "active_sessions": active_sessions,
+        "active_sessions_count": active_sessions_count,
+        "utilization_rate": utilization_rate,
+        "total_students": total_students,
+        "sessions_started_today": sessions_started_today,
+        "avg_session_length": avg_session_length,
+        "revenue_today": revenue_today,
+        "outstanding_balance": outstanding_balance,
+        "recent_payments": recent_payments,
     }
-    return render(request, 'home.html', context)
+    return render(request, "home.html", context)
 
 @login_required
 def students_list(request):
@@ -98,15 +254,46 @@ def delete_payment(request, payment_id):
     messages.success(request, f'Payment {payment_name} deleted successfully.')
     return redirect('payment_list')
 
+@login_required
 def add_payment(request):
-    if request.method == 'POST':
+    if request.method == "POST":
         form = PaymentForm(request.POST)
         if form.is_valid():
-            form.save()
-            return redirect('payment_list')
+            payment = form.save(commit=False)
+            phone_override = form.cleaned_data.get("phone_number")
+            phone_source = phone_override or payment.student.phonenumber
+
+            try:
+                response, formatted_phone = _send_stk_request(
+                    phone_input=phone_source,
+                    amount_decimal=payment.amount,
+                    account_reference=f"Pay-{payment.student.idnumber}",
+                    transaction_desc=f"Payment {payment.date:%m%d}",
+                    request=request,
+                )
+            except ValueError as exc:
+                form.add_error("phone_number", str(exc))
+            except RuntimeError as exc:
+                form.add_error(None, str(exc))
+            else:
+                if response.get("ResponseCode") == "0":
+                    payment.mpesa_status = Payment.STATUS_PENDING
+                    payment.mpesa_checkout_request_id = response.get("CheckoutRequestID")
+                    payment.mpesa_phone_number = formatted_phone
+                    payment.save()
+                    messages.success(
+                        request,
+                        "Payment saved and STK push sent. Ask the customer to enter their PIN.",
+                    )
+                    return redirect("payment_list")
+                else:
+                    form.add_error(
+                        None,
+                        response.get("errorMessage", "STK push rejected by Safaricom."),
+                    )
     else:
         form = PaymentForm()
-    return render(request, 'add_payment.html', {'form': form})
+    return render(request, "add_payment.html", {"form": form})
 
 # update student function
 @login_required
@@ -151,6 +338,7 @@ def start_session(request, idnumber):
 
 
 # Update to views.py - end_session view
+@login_required
 def end_session(request, idnumber):
     student = get_object_or_404(Student, idnumber=idnumber)
     session = UsageSession.objects.filter(
@@ -163,8 +351,9 @@ def end_session(request, idnumber):
         if request.method == 'POST':
             session.end_time = timezone.now()
             session.is_active = False
-            session.save()
             amount_due = session.total_amount()
+            session.amount_charged = amount_due
+            session.save()
             
             # Add message only for non-AJAX (AJAX uses toast)
             if not request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -195,6 +384,160 @@ def active_sessions(request):
         'now': timezone.now(),  # For header date
     }
     return render(request, 'active_sessions.html', context)
+
+@login_required
+def summary_session(request):
+    """
+    Display a quick summary of the most recent session (completed if available,
+    otherwise the latest active one) so the "Session summary" action on the
+    dashboard always has a destination.
+    """
+    latest_session = (
+        UsageSession.objects.select_related("student")
+        .order_by("-end_time", "-start_time")
+        .first()
+    )
+
+    context = {
+        "session": latest_session,
+    }
+    return render(request, "summary_session.html", context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def send_stk(request, session_id):
+    session = get_object_or_404(UsageSession, pk=session_id)
+
+    if session.is_active or session.end_time is None:
+        return JsonResponse(
+            {'success': False, 'message': 'Please end the session before sending an STK push.'},
+            status=400
+        )
+
+    if request.content_type == "application/json":
+        try:
+            payload = json.loads(request.body or "{}")
+        except json.JSONDecodeError:
+            return JsonResponse({'success': False, 'message': 'Invalid JSON payload.'}, status=400)
+    else:
+        payload = request.POST
+
+    phone_input = (payload.get('phone_number') or "").strip()
+    if not phone_input:
+        phone_input = str(session.student.phonenumber or "").strip()
+
+    amount = session.amount_charged or session.total_amount()
+
+    try:
+        response, formatted_phone = _send_stk_request(
+            phone_input=phone_input,
+            amount_decimal=amount,
+            account_reference=f"Session-{session.id}-{session.student.idnumber}",
+            transaction_desc=f"Session {session.id}",
+            request=request,
+        )
+    except ValueError as exc:
+        return JsonResponse({'success': False, 'message': str(exc)}, status=400)
+    except RuntimeError as exc:
+        logger.exception("STK push error for session %s", session.id)
+        return JsonResponse({'success': False, 'message': str(exc)}, status=502)
+
+    if response.get('ResponseCode') == '0':
+        session.payment_status = 'pending'
+        session.mpesa_checkout_request_id = response.get('CheckoutRequestID')
+        session.mpesa_phone_number = formatted_phone
+        session.save(update_fields=[
+            'payment_status',
+            'mpesa_checkout_request_id',
+            'mpesa_phone_number',
+            'amount_charged'
+        ])
+        return JsonResponse({
+            'success': True,
+            'message': 'STK push sent. Ask the customer to check their phone.',
+            'checkout_request_id': session.mpesa_checkout_request_id
+        })
+
+    logger.warning("STK push rejected for session %s: %s", session.id, response)
+    return JsonResponse({
+        'success': False,
+        'message': response.get('errorMessage', 'STK push rejected by Safaricom.')
+    }, status=400)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def mpesa_callback(request):
+    """
+    Endpoint Safaricom hits with the result of an STK push. Must be publicly reachable.
+    """
+    try:
+        body = json.loads(request.body or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({'ResultCode': 1, 'ResultDesc': 'Invalid JSON'}, status=400)
+
+    callback = body.get('Body', {}).get('stkCallback', {})
+    checkout_request_id = callback.get('CheckoutRequestID')
+    result_code = callback.get('ResultCode')
+
+    session = UsageSession.objects.filter(mpesa_checkout_request_id=checkout_request_id).first()
+    payment = None
+    if not session:
+        payment = Payment.objects.filter(mpesa_checkout_request_id=checkout_request_id).first()
+
+    target = session or payment
+    if not target:
+        logger.warning("Received callback for unknown CheckoutRequestID %s", checkout_request_id)
+    else:
+        if result_code == 0:
+            metadata = callback.get('CallbackMetadata', {}).get('Item', [])
+            metadata_map = {item.get('Name'): item.get('Value') for item in metadata if item.get('Name')}
+
+            amount_value = metadata_map.get('Amount')
+            receipt_number = metadata_map.get('MpesaReceiptNumber')
+            phone_number = metadata_map.get('PhoneNumber')
+
+            if session:
+                session.payment_status = 'paid'
+                session.mpesa_receipt_number = receipt_number
+                if phone_number:
+                    session.mpesa_phone_number = str(phone_number)
+                if amount_value is not None:
+                    try:
+                        session.amount_charged = Decimal(str(amount_value))
+                    except Exception:
+                        pass
+                session.save(update_fields=[
+                    'payment_status',
+                    'mpesa_receipt_number',
+                    'mpesa_phone_number',
+                    'amount_charged'
+                ])
+            else:
+                payment.mpesa_status = Payment.STATUS_PAID
+                payment.mpesa_receipt_number = receipt_number
+                if phone_number:
+                    payment.mpesa_phone_number = str(phone_number)
+                payment.save(update_fields=[
+                    'mpesa_status',
+                    'mpesa_receipt_number',
+                    'mpesa_phone_number',
+                ])
+        else:
+            result_desc = callback.get('ResultDesc', 'Payment failed')
+            if session:
+                session.payment_status = 'failed'
+                session.save(update_fields=['payment_status'])
+            if payment:
+                payment.mpesa_status = Payment.STATUS_FAILED
+                payment.save(update_fields=['mpesa_status'])
+            logger.info("STK payment failed for checkout %s: %s", checkout_request_id, result_desc)
+
+    return JsonResponse({
+        'ResultCode': 0,
+        'ResultDesc': 'Accepted'
+    })
 
 # login function view
 def login_view(request):

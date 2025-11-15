@@ -1,19 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Students</title>
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Students - Daryeel Cyber Cafe</title>
 </head>
-<body>
-  <h1>Student List</h1>
-  <ul>
-    {% for student in students %}
-      <li>
-        <a href="{% url 'student_detail' student.pk %}"> Firstname: {{ student.firstname }} | Lastname:  {{ student.lastname }}</a></li>
-    {% endfor %}
-  </ul>
 
-    <a href="{% url 'home' %}">Back-to Home</a>
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Student intelligence</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">Track who is in, idle, or due</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Directory</p>
+        <h1>Students list</h1>
+        <p class="page-meta">Jump into any profile to start a timer, collect a payment, or update contact info.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'add_student' %}" class="btn btn-primary">Add student</a>
+        <a href="{% url 'home' %}" class="btn btn-ghost">Dashboard</a>
+      </div>
+    </div>
+
+    <section class="data-card">
+      {% if students %}
+      <div class="directory-grid">
+        {% for student in students %}
+        <article class="profile-card">
+          <div class="student-ident">
+            <div class="avatar">{{ student.firstname|first }}{{ student.lastname|first }}</div>
+            <div>
+              <h3>{{ student.firstname }} {{ student.lastname }}</h3>
+              <p>ID {{ student.idnumber }}</p>
+            </div>
+          </div>
+          <p class="profile-meta">
+            <span>Phone: {{ student.phonenumber|default:"—" }}</span>
+            <span>ID: {{ student.idnumber }}</span>
+          </p>
+          <div class="form-actions">
+            <a href="{% url 'student_detail' student.idnumber %}" class="btn btn-secondary">Profile</a>
+            <a href="{% url 'update_student' student.idnumber %}" class="btn btn-ghost">Edit</a>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="no-sessions">
+        <p>No students found. Start by adding your first customer profile.</p>
+      </div>
+      {% endif %}
+    </section>
+
+    <div class="page-foot-links">
+      <a href="{% url 'home' %}" class="link-arrow">← Back to dashboard</a>
+      <a href="{% url 'add_student' %}" class="btn btn-secondary">Create student</a>
+    </div>
+  </main>
 </body>
+
 </html>

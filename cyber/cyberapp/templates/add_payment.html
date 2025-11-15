@@ -2,19 +2,64 @@
 <html lang="en">
 
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>add payment</title>
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>Add Payment - Daryeel Cyber Cafe</title>
 </head>
 
-<body>
-  <h1>Add Payment</h1>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Add Payment</button>
-  </form>
-  <a href="{% url 'students_list' %}">Back to Student List</a>
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Capture payments instantly</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">Keep balances current</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Cash desk</p>
+        <h1>Record a payment</h1>
+        <p class="page-meta">Attach receipts, clear balances, and keep the revenue stream flowing in seconds.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'students_list' %}" class="btn btn-secondary">Student directory</a>
+        <a href="{% url 'home' %}" class="btn btn-ghost">Dashboard</a>
+      </div>
+    </div>
+
+    <section class="form-card">
+      <h2>Payment details</h2>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div class="form-actions">
+          <button type="submit" class="form-submit-btn">Save payment</button>
+          <a href="{% url 'students_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </section>
+
+    <div class="page-foot-links">
+      <a href="{% url 'home' %}" class="link-arrow">← Back to dashboard</a>
+      <a href="{% url 'payment_list' %}" class="btn btn-secondary">View all payments</a>
+    </div>
+  </main>
 </body>
 
 </html>

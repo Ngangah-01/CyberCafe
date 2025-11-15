@@ -1,18 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+  {% load static %}
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  {% load static %}
   <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
   <title>Add Student - Daryeel Cyber Cafe</title>
 </head>
-<body>
+
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
   <header class="header">
     <div class="header-content">
-      <div class="logo">🖥️ Daryeel Cyber Cafe</div>
-      <h1>Add Student</h1>
-      <div class="user-info">Record new student details • {{ now|date:"M d, Y" }}</div> <!-- Optional: Pass 'now' from view for dynamic date -->
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Onboard customers fast</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">Create a profile before timer start</div>
+      </div>
     </div>
   </header>
 
@@ -24,17 +38,32 @@
   </ul>
   {% endif %}
 
-  <main class="main-content">
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Directory</p>
+        <h1>Add new student</h1>
+        <p class="page-meta">Capture identification and contact details so you can launch and reconcile sessions confidently.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'students_list' %}" class="btn btn-secondary">Back to list</a>
+        <a href="{% url 'home' %}" class="btn btn-ghost">Dashboard</a>
+      </div>
+    </div>
+
     <section class="form-card">
-      <h2>Add New Student</h2>
-      <form method="POST">
+      <h2>Student profile</h2>
+      <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="form-submit-btn">Add Student</button>
+        <div class="form-actions">
+          <button type="submit" class="form-submit-btn">Save student</button>
+          <a href="{% url 'students_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
       </form>
     </section>
   </main>
-
-  <a href="{% url 'students_list' %}" class="back-link">← Back to Student List</a>
+  <script defer src="{% static 'js/alerts.js' %}"></script>
 </body>
+
 </html>
