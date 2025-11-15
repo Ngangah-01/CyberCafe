@@ -93,7 +93,8 @@ def _send_stk_request(*, phone_input, amount_decimal, account_reference, transac
         logger.exception("Unexpected STK error")
         raise RuntimeError(f"Could not initiate STK push: {exc}") from exc
 
-    return response, formatted_phone
+    response_data = response.response_data if hasattr(response, "response_data") else response
+    return response_data, formatted_phone
 
 
 def _format_duration(seconds: int) -> str:
