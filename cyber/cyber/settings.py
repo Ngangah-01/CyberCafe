@@ -90,6 +90,7 @@ WSGI_APPLICATION = 'cyber.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+
 DATABASES = {
     'default': dj_database_url.parse(os.getenv('DATABASE_URL')) if os.getenv('DATABASE_URL') else {
         'ENGINE': 'django.db.backends.sqlite3',

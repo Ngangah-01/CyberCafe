@@ -28,22 +28,24 @@ class UsageSession(models.Model):
     is_active = models.BooleanField(default=True)
 
     def duration_in_hours(self):
-        if not self.end_time:
-            # For active sessions, calculate duration up to now
-            end = timezone.now()
-        else:
-            end = self.end_time
-        duration = end - self.start_time
-        # Calculate hours, minutes, and seconds
-        total_seconds = int(duration.total_seconds())
+        """Returns duration in decimal hours, e.g. 1.75"""
+        end = self.end_time or timezone.now()
+        seconds = (end - self.start_time).total_seconds()
+        return round(seconds / 3600, 4)
+
+    def formatted_duration(self):
+        """Returns HH:MM:SS format for UI"""
+        end = self.end_time or timezone.now()
+        total_seconds = int((end - self.start_time).total_seconds())
         hours = total_seconds // 3600
         minutes = (total_seconds % 3600) // 60
         seconds = total_seconds % 60
-        
         return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
 
     def total_amount(self):
-        return round(self.duration_in_hours() * 100, 2)
+        """Return cost using decimal hours"""
+        rate_per_hour = 100  # adjust as needed
+        return round(self.duration_in_hours() * rate_per_hour, 2)
 
     def __str__(self):
         return f"{self.student.firstname} - {self.start_time.strftime('%Y-%m-%d %H:%M')}"
