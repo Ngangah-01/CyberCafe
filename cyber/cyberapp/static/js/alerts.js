@@ -50,7 +50,32 @@ function showAlert(message, level = 'info') {
     });
 }
 
+function showConfirm(message, options = {}) {
+  const fallback = () => Promise.resolve(window.confirm(message));
+
+  return loadSweetAlert()
+    .then(() =>
+      Swal.fire({
+        icon: options.icon || 'warning',
+        title: options.title || 'Are you sure?',
+        text: message,
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#94a3b8',
+        confirmButtonText: options.confirmText || 'Yes',
+        cancelButtonText: options.cancelText || 'Cancel',
+        reverseButtons: true,
+      })
+    )
+    .then((result) => result.isConfirmed)
+    .catch((error) => {
+      console.error(error);
+      return fallback();
+    });
+}
+
 window.showAlert = showAlert;
+window.showConfirm = showConfirm;
 
 document.addEventListener('DOMContentLoaded', () => {
   const messageContainers = document.querySelectorAll('.messages');

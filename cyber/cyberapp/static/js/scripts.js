@@ -42,59 +42,74 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // End session function (AJAX to stay on page)
     window.endSession = function (button) {
-        if (!confirm('End session?')) return;
-
         const row = button.closest('.session-row');
         const sessionId = row.dataset.sessionId;
         const studentId = row.dataset.studentId;
-    
-        if (!csrfToken) {
-            showMessage('CSRF token missing. Refresh the page.', 'error');
-            console.error('No CSRF token found');
-            return;
-        }
+        const studentName = row.cells[0].textContent.trim();
 
-        fetch(`/end_session/${studentId}/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRFToken': csrfToken
-            },
-            body: JSON.stringify({ session_id: sessionId })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.text().then(text => {
-                    console.error('Error Response Body:', text.substring(0, 200) + '...');
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                });
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                row.classList.remove('session-row');
-                row.classList.add('ended-row');
-                button.textContent = 'Session Ended';
-                button.disabled = true;
-                button.style.background = 'linear-gradient(135deg, #6c757d, #545b62)';
-                const stkBtn = row.querySelector('.stk-btn');
-                if (stkBtn) {
-                    stkBtn.disabled = false;
-                    stkBtn.classList.add('action-btn');
-                    stkBtn.textContent = 'Send STK';
+        const confirmPromise = window.showConfirm
+            ? window.showConfirm(
+                `End the session for ${studentName}? This stops the timer and calculates the final bill.`,
+                {
+                    title: 'End session?',
+                    confirmText: 'End session',
+                    cancelText: 'Keep running',
+                    icon: 'warning',
                 }
-                row.querySelector('.elapsed').textContent = 'Ended';
-                row.querySelector('.amount').textContent = data.amount + ' KSH';
-                showMessage(`Session ended for ${row.cells[0].textContent}. Amount due: ${data.amount} KSH.`, 'success');
-            } else {
-                showMessage(data.message || 'Error ending session: ' + data.status, 'error');
+              )
+            : Promise.resolve(window.confirm('End session?'));
+
+        confirmPromise.then((confirmed) => {
+            if (!confirmed) return;
+
+            if (!csrfToken) {
+                showMessage('CSRF token missing. Refresh the page.', 'error');
+                console.error('No CSRF token found');
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Full Error:', error);
-            showMessage('Network error: ' + (error.message || 'Check console for details'), 'error');
+
+            fetch(`/end_session/${studentId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ session_id: sessionId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => {
+                        console.error('Error Response Body:', text.substring(0, 200) + '...');
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status === 'success') {
+                    row.classList.remove('session-row');
+                    row.classList.add('ended-row');
+                    button.textContent = 'Session Ended';
+                    button.disabled = true;
+                    button.style.background = 'linear-gradient(135deg, #6c757d, #545b62)';
+                    const stkBtn = row.querySelector('.stk-btn');
+                    if (stkBtn) {
+                        stkBtn.disabled = false;
+                        stkBtn.classList.add('action-btn');
+                        stkBtn.textContent = 'Send STK';
+                    }
+                    row.querySelector('.elapsed').textContent = 'Ended';
+                    row.querySelector('.amount').textContent = data.amount + ' KSH';
+                    showMessage(`Session ended for ${studentName}. Amount due: ${data.amount} KSH.`, 'success');
+                } else {
+                    showMessage(data.message || 'Error ending session: ' + data.status, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Full Error:', error);
+                showMessage('Network error: ' + (error.message || 'Check console for details'), 'error');
+            });
         });
     };
 
