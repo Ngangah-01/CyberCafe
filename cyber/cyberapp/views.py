@@ -473,7 +473,12 @@ def mpesa_callback(request):
     result_code = callback.get('ResultCode')
 
     session = UsageSession.objects.filter(mpesa_checkout_request_id=checkout_request_id).first()
+    payment = None
     if not session:
+        payment = Payment.objects.filter(mpesa_checkout_request_id=checkout_request_id).first()
+
+    target = session or payment
+    if not target:
         logger.warning("Received callback for unknown CheckoutRequestID %s", checkout_request_id)
     else:
         if result_code == 0:
@@ -484,26 +489,40 @@ def mpesa_callback(request):
             receipt_number = metadata_map.get('MpesaReceiptNumber')
             phone_number = metadata_map.get('PhoneNumber')
 
-            session.payment_status = 'paid'
-            session.mpesa_receipt_number = receipt_number
-            if phone_number:
-                session.mpesa_phone_number = str(phone_number)
-            if amount_value is not None:
-                try:
-                    session.amount_charged = Decimal(str(amount_value))
-                except Exception:
-                    pass
-            session.save(update_fields=[
-                'payment_status',
-                'mpesa_receipt_number',
-                'mpesa_phone_number',
-                'amount_charged'
-            ])
+            if session:
+                session.payment_status = 'paid'
+                session.mpesa_receipt_number = receipt_number
+                if phone_number:
+                    session.mpesa_phone_number = str(phone_number)
+                if amount_value is not None:
+                    try:
+                        session.amount_charged = Decimal(str(amount_value))
+                    except Exception:
+                        pass
+                session.save(update_fields=[
+                    'payment_status',
+                    'mpesa_receipt_number',
+                    'mpesa_phone_number',
+                    'amount_charged'
+                ])
+            else:
+                payment.mpesa_status = Payment.STATUS_PAID
+                payment.mpesa_receipt_number = receipt_number
+                if phone_number:
+                    payment.mpesa_phone_number = str(phone_number)
+                payment.save(update_fields=[
+                    'mpesa_status',
+                    'mpesa_receipt_number',
+                    'mpesa_phone_number',
+                ])
         else:
             result_desc = callback.get('ResultDesc', 'Payment failed')
             if session:
                 session.payment_status = 'failed'
                 session.save(update_fields=['payment_status'])
+            if payment:
+                payment.mpesa_status = Payment.STATUS_FAILED
+                payment.save(update_fields=['mpesa_status'])
             logger.info("STK payment failed for checkout %s: %s", checkout_request_id, result_desc)
 
     return JsonResponse({

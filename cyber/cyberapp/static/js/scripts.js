@@ -49,11 +49,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const confirmPromise = window.showConfirm
             ? window.showConfirm(
-                `End the session for ${studentName}? This stops the timer and calculates the final bill.`,
+                `This will stop the timer for ${studentName} and calculate the final bill.`,
                 {
                     title: 'End session?',
-                    confirmText: 'End session',
-                    cancelText: 'Keep running',
+                    confirmText: 'Yes, end it',
+                    cancelText: 'No, keep running',
                     icon: 'warning',
                 }
               )

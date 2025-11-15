@@ -52,6 +52,7 @@
               <th>Student</th>
               <th>Amount (KSH)</th>
               <th>Balance</th>
+              <th>Status</th>
               <th>Date</th>
               <th>Actions</th>
             </tr>
@@ -67,6 +68,20 @@
                 <span class="amount-chip">+{{ payment.amount|floatformat:2 }}</span>
               </td>
               <td>{{ payment.balance|floatformat:2 }}</td>
+              <td>
+                {% if payment.mpesa_status == 'paid' %}
+                  <span class="trend-chip positive">Paid</span>
+                {% elif payment.mpesa_status == 'pending' %}
+                  <span class="trend-chip">Pending PIN</span>
+                {% elif payment.mpesa_status == 'failed' %}
+                  <span class="trend-chip danger">Failed</span>
+                {% else %}
+                  <span class="trend-chip">Not requested</span>
+                {% endif %}
+                {% if payment.mpesa_receipt_number %}
+                <p class="kpi-foot">Receipt {{ payment.mpesa_receipt_number }}</p>
+                {% endif %}
+              </td>
               <td>{{ payment.date|date:"M d, Y" }}</td>
               <td class="table-actions">
                 <a href="{% url 'student_detail' payment.student.idnumber %}" class="btn btn-secondary">Profile</a>
