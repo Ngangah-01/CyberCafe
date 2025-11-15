@@ -54,6 +54,47 @@ def _prepare_phone_number(raw_phone: str) -> str:
     return phone
 
 
+def _resolve_callback_url(request):
+    callback_url = getattr(settings, "MPESA_CALLBACK_URL", "")
+    if not callback_url or "yourdomain.com" in callback_url:
+        callback_url = request.build_absolute_uri(reverse("mpesa_callback"))
+    return callback_url
+
+
+def _send_stk_request(*, phone_input, amount_decimal, account_reference, transaction_desc, request):
+    phone_input = _prepare_phone_number(phone_input)
+    if not phone_input:
+        raise ValueError("Phone number is required for STK push.")
+
+    try:
+        formatted_phone = daraja_format_phone_number(phone_input)
+    except IllegalPhoneNumberException as exc:
+        raise ValueError(str(exc)) from exc
+
+    amount_decimal = Decimal(amount_decimal)
+    if amount_decimal <= 0:
+        raise ValueError("Amount must be greater than zero.")
+
+    amount_integer = int(amount_decimal.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    callback_url = _resolve_callback_url(request)
+
+    client = MpesaClient()
+    try:
+        response = client.stk_push(
+            phone_number=formatted_phone,
+            amount=amount_integer,
+            account_reference=account_reference[:12],
+            transaction_desc=transaction_desc[:13],
+            callback_url=callback_url,
+        )
+    except (MpesaConnectionError, MpesaInvalidParameterException) as exc:
+        raise RuntimeError(str(exc)) from exc
+    except Exception as exc:  # pragma: no cover - safety net
+        raise RuntimeError("Could not initiate STK push.") from exc
+
+    return response, formatted_phone
+
+
 def _format_duration(seconds: int) -> str:
     hours = seconds // 3600
     minutes = (seconds % 3600) // 60

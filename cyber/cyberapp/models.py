@@ -15,10 +15,30 @@ class Student(models.Model):
 
 
 class Payment(models.Model):
+    STATUS_NOT_REQUESTED = "not_requested"
+    STATUS_PENDING = "pending"
+    STATUS_PAID = "paid"
+    STATUS_FAILED = "failed"
+
+    PAYMENT_STATUS_CHOICES = [
+        (STATUS_NOT_REQUESTED, "Not requested"),
+        (STATUS_PENDING, "Pending confirmation"),
+        (STATUS_PAID, "Paid"),
+        (STATUS_FAILED, "Failed"),
+    ]
+
     amount = models.DecimalField(max_digits=10, decimal_places=2)
     balance = models.DecimalField(max_digits=10, decimal_places=2)
     date = models.DateField()
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='payments')
+    mpesa_status = models.CharField(
+        max_length=20,
+        choices=PAYMENT_STATUS_CHOICES,
+        default=STATUS_NOT_REQUESTED,
+    )
+    mpesa_checkout_request_id = models.CharField(max_length=64, blank=True, null=True)
+    mpesa_receipt_number = models.CharField(max_length=32, blank=True, null=True)
+    mpesa_phone_number = models.CharField(max_length=15, blank=True, null=True)
 
     def __str__(self):
         return f"{self.student.firstname} - {self.amount}"
