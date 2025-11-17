@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     cancelText: 'No, keep running',
                     icon: 'warning',
                 }
-              )
+            )
             : Promise.resolve(window.confirm('End session?'));
 
         confirmPromise.then((confirmed) => {

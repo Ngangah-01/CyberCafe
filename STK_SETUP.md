@@ -51,7 +51,7 @@ Every STK initiation builds the callback URL through `_resolve_callback_url()`; 
 
 The project defines `path('mpesa/callback/', views.mpesa_callback, ...)`. Safaricom must POST to this route. For local testing:
 
-1. Start the dev server:  
+1. Start the dev server: 
    `../.venv/bin/python manage.py runserver 0.0.0.0:8000`
 2. Start a tunnel, e.g. `ngrok http 8000`.
 3. Update `.env` and the Daraja portal to use `https://<ngrok-id>.ngrok.io/mpesa/callback/`.
