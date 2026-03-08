@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% load static %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+  <title>User Profile - Daryeel Cyber Cafe</title>
+</head>
+<body class="dashboard-body">
+  <div class="background-effects" aria-hidden="true">
+    <div class="glow glow-one"></div>
+    <div class="glow glow-two"></div>
+    <div class="glow glow-three"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <header class="header">
+    <div class="header-content">
+      <div class="brand-cluster">
+        <div class="logo">🖥️ Daryeel Cyber Cafe</div>
+        <p class="tagline">Account overview</p>
+      </div>
+      <div class="header-meta">
+        <span class="today">{% now "l, M d" %}</span>
+        <div class="user-info">Signed in as {{ request.user.username }}</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-shell">
+    <div class="page-header-block">
+      <div>
+        <p class="eyebrow">Profile</p>
+        <h1>Your account</h1>
+        <p class="page-meta">Basic details about the operator logged into the dashboard.</p>
+      </div>
+      <div class="page-actions">
+        <a href="{% url 'home' %}" class="btn btn-secondary">Back to dashboard</a>
+        <a href="{% url 'logout' %}" class="btn btn-ghost">Logout</a>
+      </div>
+    </div>
+
+    <section class="detail-card">
+      <div class="meta-list">
+        <div class="meta-item">
+          <span>Username</span>
+          <strong>{{ request.user.username }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Email</span>
+          <strong>{{ request.user.email|default:"Not set" }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Joined</span>
+          <strong>{{ request.user.date_joined|date:"M d, Y H:i" }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Last login</span>
+          <strong>{{ request.user.last_login|date:"M d, Y H:i"|default:"—" }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <div class="page-foot-links">
+      <a href="{% url 'home' %}" class="link-arrow">← Back to dashboard</a>
+      <a href="{% url 'logout' %}" class="btn btn-secondary">Sign out</a>
+    </div>
+  </main>
+</body>
+</html>
+
