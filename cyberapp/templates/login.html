@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <title>Login - Daryeel Cyber Cafe</title>
+</head>
+
+<body>
+    <main class="login-container">
+        <section class="login-wrapper">
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Sign in to manage your cyber café dashboard</p>
+
+            {% if error %}
+            <p class="error-msg">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST"  action="{% url 'login' %}" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required />
+                </div>
+
+                <button type="submit" class="login-btn">Sign In</button>
+            </form>
+
+        <p> Dont have an account? <a href="{% url 'register' %}">Sign up</a></p>
+        </section>
+    </main>
+
+    <!-- <footer class="footer">
+        <p>&copy; 2025 Daryeel Cyber Cafe. All rights reserved.</p>
+    </footer> -->
+</body>
+
+</html>

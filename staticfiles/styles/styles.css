@@ -1,0 +1,379 @@
+/* styles.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f8f9fa;
+  /* Light gray */
+  color: #333;
+  line-height: 1.6;
+}
+
+.header {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  /* Stylish blue gradient */
+  color: white;
+  padding: 0;
+  box-shadow: 0 2px 10px rgba(0, 123, 255, 0.3);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.header h1 {
+  font-size: 28px;
+  margin: 0;
+}
+
+.user-info {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Messages */
+.messages {
+  list-style: none;
+  margin: 20px auto;
+  max-width: 1400px;
+  padding: 0 20px;
+}
+
+.messages li {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 12px 20px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 4px solid #28a745;
+}
+
+/* Main Content */
+.main-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Dashboard Cards */
+.dashboard-cards {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  /* Reduced margins */
+  margin-bottom: 40px;
+  /* flex-wrap: wrap; */
+}
+
+.card {
+  background: white;
+  border-radius: 12px;
+  /* More stylish rounded */
+  padding: 24px 20px;
+  /* Adjusted for landscape */
+  width: 330px;
+  /* Wider for landscape feel */
+  height: 230px;
+  /* Fixed shorter height */
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  /* Softer shadow */
+  transition: all 0.3s ease;
+  /* Smooth hover */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: linear-gradient(90deg, #007bff, #28a745);
+  /* Gradient top border for style */
+}
+
+.card:hover {
+  transform: translateY(-8px) scale(1.02);
+  /* Lift and slight scale */
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+  font-size: 36px;
+  /* Larger icons */
+  margin-bottom: 12px;
+}
+
+.card h3 {
+  font-size: 18px;
+  margin-bottom: 4px;
+  color: #333;
+}
+
+.card p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.card-metric {
+  font-size: 28px;
+  /* Larger metric */
+  font-weight: bold;
+  color: #007bff;
+  margin-bottom: 8px;
+}
+
+.card-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.3s;
+}
+
+.card-btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-2px);
+}
+
+/* Students Table */
+.students-table {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.students-table h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #333;
+  font-size: 24px;
+}
+
+.table-container {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  /* Ensure horizontal scroll if needed */
+}
+
+th,
+td {
+  padding: 14px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e9ecef;
+}
+
+th {
+  background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+  font-weight: 600;
+  color: #495057;
+  position: sticky;
+  top: 0;
+}
+
+tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+tr:hover {
+  background-color: #e3f2fd;
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.status-badge.inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.status-badge.active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+/* Active example: .status-badge.active { background: #d4edda; color: #155724; } */
+
+.action-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  padding: 8px 16px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 13px;
+  transition: all 0.3s;
+}
+
+.action-btn:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+  transform: translateY(-1px);
+}
+
+.action-btn.end-btn {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+  border: none;
+}
+
+.action-btn.end-btn:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+}
+
+
+/* Active Sessions Specific */
+.sessions-table {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  margin-bottom: 20px;
+}
+
+.sessions-table h2 {
+  text-align: center;
+  margin-bottom: 24px;
+  color: #333;
+  font-size: 24px;
+}
+
+.ended-row {
+  background-color: #55d655 !important;
+}
+
+.no-sessions {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  background: linear-gradient(135deg, #0fb300, #16950a);
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 500;
+  max-width: 250px;
+  margin: 0 auto;
+  transition: background 0.3s;
+}
+
+.back-link:hover {
+  background: linear-gradient(135deg, #0056b3, #004085);
+}
+
+.elapsed,
+.amount {
+  font-weight: bold;
+  color: #007bff;
+}
+
+.stk-btn {
+  background: linear-gradient(135deg, #6c757d, #545b62) !important;
+  cursor: not-allowed;
+  opacity: 0.8;
+  margin-left: 8px;
+  border-radius:6px ;
+  height: 30px;
+  width: 100px;
+  position: relative;
+}
+
+.stk-btn:hover {
+  opacity: 0.4;
+  position: relative;
+}
+
+.stk-btn:hover::after {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 16px;
+  z-index: 10;
+
+}
+
+.end-btn {
+  background: linear-gradient(135deg, #dc3545, #c82333) !important;
+  margin-right: 8px;
+}
+
+.end-btn:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130) !important;
+}
+
+/* Ensure CSRF meta for AJAX */
+body::before {
+  content: '';
+  display: none;
+}
+
+
+
+/* Responsive */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .dashboard-cards {
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 280px;
+    height: auto;
+    /* Allow flex on mobile */
+    padding: 20px;
+  }
+
+  th,
+  td {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+}
