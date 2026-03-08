@@ -84,16 +84,8 @@ WSGI_APPLICATION = 'cyber.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'cyber',
-        'USER': 'root',
-        'PASSWORD': 'sqlr00T',
-        'HOST': 'localhost',
-        'PORT': '3306',
-        }
-}
+# DATABASES
+
 
 DATABASES = {
     'default': dj_database_url.parse(
