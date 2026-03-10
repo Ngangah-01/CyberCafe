@@ -7,6 +7,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.db.models import Sum
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -32,6 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 TOTAL_MACHINES = 30
+REGISTER_TEMPLATE = 'register.html'
 
 
 def _prepare_phone_number(raw_phone: str) -> str:
@@ -553,6 +555,38 @@ def login_view(request):
             return render(request, 'login.html', {'error': 'Invalid username or password.'})
 
     return render(request, 'login.html')
+
+
+def register_view(request):
+    if request.method == 'POST':
+        username = request.POST.get('username')
+        email = request.POST.get('email')
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        
+        # Validate passwords match
+        if password1 != password2:
+            return render(request, REGISTER_TEMPLATE, {'error': 'Passwords do not match.'})
+        
+        # Check if username already exists
+        if User.objects.filter(username=username).exists():
+            return render(request, REGISTER_TEMPLATE, {'error': 'Username already exists.'})
+        
+        # Check if email already exists
+        if User.objects.filter(email=email).exists():
+            return render(request, REGISTER_TEMPLATE, {'error': 'Email already exists.'})
+        
+        # Create new user
+        try:
+            user = User.objects.create_user(username=username, email=email, password=password1)
+            user.save()
+            login(request, user)
+            messages.success(request, 'Account created successfully. You are now logged in.')
+            return redirect('home')
+        except Exception as e:
+            return render(request, REGISTER_TEMPLATE, {'error': f'Error creating account: {str(e)}'})
+    
+    return render(request, REGISTER_TEMPLATE)
 
 # logout function view
 def logout_view(request):

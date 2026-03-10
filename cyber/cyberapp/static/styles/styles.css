@@ -319,6 +319,12 @@ img {
   border-color: transparent;
 }
 
+.btn-danger {
+  background: linear-gradient(130deg, #dc3d3d, #983232);
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(220, 38, 38, 0.35);
+}
+
 .link-arrow {
   display: inline-flex;
   align-items: center;
@@ -1114,7 +1120,7 @@ body::before {
   justify-content: center;
   align-items: center;
   background: linear-gradient(135deg, rgba(0, 123, 255, 0.3), rgba(40, 167, 69, 0.3)),
-    url("../images/bg.jpg") center/cover no-repeat;
+    url("../images/keyboard.jpg") center/cover no-repeat;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -1216,6 +1222,8 @@ body::before {
   color: #cfd8dc;
   font-size: 14px;
   text-align: center;
+  
+  
 }
 
 .error-msg {

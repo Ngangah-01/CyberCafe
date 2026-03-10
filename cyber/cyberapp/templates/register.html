@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles/styles.css' %}">
+    <title>Sign Up - Daryeel Cyber Cafe</title>
+</head>
+
+<body>
+    <main class="login-container">
+        <section class="login-wrapper">
+            <h1>Create Account</h1>
+            <p class="subtitle">Sign up to manage your cyber café dashboard</p>
+
+            {% if error %}
+            <p class="error-msg">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST" action="{% url 'register' %}" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Choose a username" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" placeholder="Enter your email" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="password1">Password</label>
+                    <input type="password" id="password1" name="password1" placeholder="Enter your password" required />
+                </div>
+
+                <div class="form-group">
+                    <label for="password2">Confirm Password</label>
+                    <input type="password" id="password2" name="password2" placeholder="Confirm your password" required />
+                </div>
+
+                <button type="submit" class="login-btn">Sign Up</button>
+            </form>
+
+            <p>Already have an account? <a href="{% url 'login' %}">Sign in</a></p>
+        </section>
+    </main>
+
+</body>
+
+</html>
