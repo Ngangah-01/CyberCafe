@@ -100,7 +100,7 @@ DATABASES = {
 # Add SSL requirement for production database
 if os.getenv('DATABASE_URL'):
     DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require',
+        'sslmode': 'prefer'if DEBUG else 'require', #allow non-ssl connections locally
     }
 
 # Password validation
