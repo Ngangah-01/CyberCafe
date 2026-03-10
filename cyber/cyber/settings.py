@@ -84,19 +84,24 @@ WSGI_APPLICATION = 'cyber.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
+# DATABASES
+
 
 DATABASES = {
-    'default': dj_database_url.parse(os.getenv('DATABASE_URL')) if os.getenv('DATABASE_URL') else {
+    'default': dj_database_url.parse(
+        os.getenv('DATABASE_URL'), conn_max_age=600, conn_health_checks=True, ssl_require=True
+    ) if os.getenv('DATABASE_URL')
+    else {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+# Add SSL requirement for production database
+if os.getenv('DATABASE_URL'):
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'prefer'if DEBUG else 'require', #allow non-ssl connections locally
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -157,17 +162,20 @@ CSRF_TRUSTED_ORIGINS = [
 
 # if not logged in, redirect to login page
 LOGIN_URL = '/login/'
+
 # after login, redirect to home page
 LOGIN_REDIRECT_URL = 'home'
+
 # after logout, redirect to login page
 LOGOUT_REDIRECT_URL = '/login/'
+
 
 # Django Daraja settings
 MPESA_ENVIRONMENT = 'sandbox'  # Change to 'production' in production
 MPESA_CONSUMER_KEY = os.getenv('MPESA_CONSUMER_KEY', 'bXuEgvpDIil30KXkGjX2k9bstHVds7e4xTDkYo9QNuNSzcVd')
 MPESA_CONSUMER_SECRET = os.getenv('MPESA_CONSUMER_SECRET', 'I5mHWU8bNrZyAF3ZzpxiVKYV7Nw3hf5lKBeNAihv8chpEhRYlBWZQhdtMRtil2OL')
 MPESA_EXPRESS_SHORTCODE = os.getenv('MPESA_EXPRESS_SHORTCODE', '174379')
-MPESA_SHORTCODE_TYPE = 'payBill'  # or 'TillNumber' based on your setup
+MPESA_SHORTCODE_TYPE = os.getenv('MPESA_SHORTCODE_TYPE', '4')  # '1' for Paybill, '4' for Till Number
 MPESA_PASSKEY = os.getenv('MPESA_PASSKEY', 'bfb279f9aa9bdbcf158e97dd71a467cd2e0c893059b10f78e6b72ada1ed2c919')
 MPESA_CALLBACK_URL = os.getenv('MPESA_CALLBACK_URL', 'https://cybercafe-0k4y.onrender.com/callback/')
 MPESA_STK_TIMEOUT = timedelta(minutes=5)

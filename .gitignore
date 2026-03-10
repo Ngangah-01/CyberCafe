@@ -19,3 +19,7 @@ staticfiles/
 
 #environment variables
 .env
+
+# other
+*.bak
+*.tmp

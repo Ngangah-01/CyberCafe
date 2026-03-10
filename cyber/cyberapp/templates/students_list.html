@@ -62,6 +62,7 @@
           <div class="form-actions">
             <a href="{% url 'student_detail' student.idnumber %}" class="btn btn-secondary">Profile</a>
             <a href="{% url 'update_student' student.idnumber %}" class="btn btn-ghost">Edit</a>
+            <a href="{% url 'delete_student' student.idnumber %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete {{ student.firstname }} {{ student.lastname }}?');">Delete</a>
           </div>
         </article>
         {% endfor %}
